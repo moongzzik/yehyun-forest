@@ -44,6 +44,12 @@ if (window.tailwind) tailwind.config = { theme: { extend: { fontFamily: { sans: 
   .modal { max-height: 88%; }
   #toast { animation: toastIn .25s ease-out; }
   input[type=number]::-webkit-inner-spin-button { opacity: 0; }
+  @keyframes drift { 0% { transform: translateX(-24px); } 50% { transform: translateX(24px); } 100% { transform: translateX(-24px); } }
+  .cloud { position: absolute; animation: drift 30s ease-in-out infinite; }
+  @keyframes fall { 0% { top: -4%; transform: translateX(0); } 50% { transform: translateX(10px); } 100% { top: 104%; transform: translateX(-6px); } }
+  .flake { position: absolute; top: -4%; border-radius: 50%; background: #fff; box-shadow: 0 0 3px rgba(140,170,200,.8); animation: fall linear infinite; }
+  @keyframes twinkle { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
+  .twinkle { animation: twinkle 1.6s ease-in-out infinite; }
   .thirsty { filter: saturate(.25) sepia(.55) brightness(1.02); transform: rotate(-1.5deg); }
   .tab-btn.on { color: #15803D; transform: scale(1.08); }
 </style>
@@ -76,8 +82,11 @@ if (window.tailwind) tailwind.config = { theme: { extend: { fontFamily: { sans: 
         <button onclick="openInstall()" class="bg-green-600 text-white rounded-lg px-2.5 py-1">방법 보기</button>
         <button onclick="hideInstallBanner()" class="text-gray-300 px-1">✕</button>
       </div>
+      <div id="xmas-banner" class="hidden rounded-2xl px-3 py-2.5 text-center text-sm border-2 border-red-200 bg-gradient-to-r from-red-50 via-white to-green-50 text-red-600">🎄 메리 크리스마스! 오늘은 숲에 눈이 내리고 나무들이 트리로 변했어요 ⛄</div>
       <div id="exam-card" class="hidden rounded-2xl p-3.5 border-2 border-amber-200 bg-gradient-to-br from-amber-50 to-yellow-50"></div>
-      <div id="char-wrap" class="w-full h-52 flex items-center justify-center transition-all duration-500">
+      <div id="char-wrap" class="relative w-full h-52 flex items-center justify-center transition-all duration-500 rounded-3xl overflow-hidden" style="background:linear-gradient(#E6F4FF 0%, rgba(255,255,255,0) 70%)">
+        <div id="sky-clouds"></div>
+        <div id="xmas-sky"></div>
         <div id="tree-box" class="relative w-52 h-52 transition-all duration-500">
           <div id="tree" class="w-full h-full drop-shadow-sm transition-all duration-700"></div>
           <div id="animals" class="absolute inset-0 pointer-events-none"></div>
@@ -204,11 +213,13 @@ if (window.tailwind) tailwind.config = { theme: { extend: { fontFamily: { sans: 
     <section id="view-stats" class="hidden flex-col p-5 pt-3 gap-3">
       <div class="card p-4">
         <div class="flex justify-between items-center mb-2"><h3 class="text-green-700 text-lg">🌲 나의 숲</h3><span id="forest-count" class="text-xs text-gray-500 font-sans"></span></div>
-        <div class="rounded-2xl overflow-hidden" style="background:linear-gradient(#EAF6FF 0%, #EFF9E8 45%, #CDEBB4 80%, #B5DE97 100%)">
-          <div id="forest-trees" class="flex flex-wrap justify-center items-end px-3 pt-4 pb-6 min-h-[160px]"></div>
+        <div class="relative rounded-2xl overflow-hidden" style="background:linear-gradient(#DDF0FF 0%, #EFF9E8 45%, #CDEBB4 80%, #B5DE97 100%)">
+          <div id="forest-clouds"></div>
+          <div id="xmas-forest"></div>
+          <div id="forest-trees" class="relative flex flex-wrap justify-center items-end px-3 pt-12 pb-6 min-h-[180px]"></div>
         </div>
         <p id="forest-note" class="text-[11px] text-gray-500 font-sans mt-2"></p>
-        <p class="text-sm text-gray-600 mt-4 mb-2">🐾 숲 친구 <span class="text-[11px] text-gray-400 font-sans">(연속 달성일마다 찾아와요)</span></p>
+        <p class="text-sm text-gray-600 mt-4 mb-2">🐾 숲 친구 <span class="text-[11px] text-gray-400 font-sans">(10종 · 연속 달성일·누적 달성일마다 찾아와요)</span></p>
         <div id="animal-dex" class="grid grid-cols-5 gap-1.5"></div>
         <p class="text-sm text-gray-600 mt-4 mb-2">📖 나무 도감 <span class="text-[11px] text-gray-400 font-sans">(30일마다 1그루씩, 10종)</span></p>
         <div id="dex" class="grid grid-cols-5 gap-1.5"></div>
@@ -339,6 +350,22 @@ if (window.tailwind) tailwind.config = { theme: { extend: { fontFamily: { sans: 
       </div>
     </div>
 
+    <div id="m-subjects" class="modal hidden bg-white w-full max-w-sm rounded-[2rem] p-6 flex-col shadow-2xl overflow-y-auto">
+      <div class="flex justify-between items-center mb-2">
+        <h2 class="text-2xl text-green-700">📚 과목 관리</h2>
+        <button onclick="closeModal()" class="text-gray-400 text-3xl leading-none">&times;</button>
+      </div>
+      <p class="text-xs text-gray-500 font-sans mb-3">학년이 바뀌면 새 과목을 추가하고, 안 하는 과목은 <b>숨기기</b> 해 주세요. 숨겨도 지금까지의 공부 기록은 달력·통계에 그대로 남아요.</p>
+      <div class="bg-green-50/70 rounded-2xl p-3 flex flex-col gap-2 mb-4">
+        <p class="text-sm text-gray-700">＋ 새 과목 직접 입력</p>
+        <input id="subj-name" type="text" maxlength="10" placeholder="과목 이름 (예: 문학, 미적분, 화학)" class="p-2.5 rounded-xl bg-white border border-green-100 outline-none text-sm font-sans focus:border-green-400">
+        <p class="text-[11px] text-gray-500 font-sans">아이콘 고르기</p>
+        <div id="subj-emojis" class="grid grid-cols-10 gap-1"></div>
+        <button onclick="addSubject()" class="bg-green-600 text-white py-2.5 rounded-xl">추가하기</button>
+      </div>
+      <div id="subj-list" class="flex flex-col gap-1.5 font-sans text-sm"></div>
+    </div>
+
     <div id="m-dday" class="modal hidden bg-white w-full max-w-sm rounded-[2rem] p-6 flex-col shadow-2xl overflow-y-auto">
       <div class="flex justify-between items-center mb-3">
         <h2 class="text-2xl text-green-600">📅 D-Day 관리</h2>
@@ -373,6 +400,7 @@ if (window.tailwind) tailwind.config = { theme: { extend: { fontFamily: { sans: 
           <span><b class="font-jua text-base text-gray-700">⏩ 테스트 모드</b><br><span class="text-xs text-gray-400">타이머 100배속 (기록은 실제 분으로 저장돼요)</span></span>
           <input id="set-test" type="checkbox" class="w-6 h-6 accent-green-500">
         </label>
+        <button onclick="closeModal(); setTimeout(openSubjects, 320)" class="w-full bg-green-50 text-green-700 py-2.5 rounded-xl font-jua">📚 과목 관리 (학년이 바뀌면 여기서)</button>
         <button onclick="openInstall()" class="w-full bg-green-50 text-green-700 py-2.5 rounded-xl font-jua">📲 홈 화면에 추가하는 방법</button>
         <div>
           <b class="font-jua text-base text-gray-700">🙋 학생 이름</b>
@@ -409,15 +437,31 @@ if (window.tailwind) tailwind.config = { theme: { extend: { fontFamily: { sans: 
 
 <script>
 /* ================= 기본 데이터 ================= */
-const SUBJECTS = [
-  { k: '국어', e: '📘', c: '#60A5FA', f: '🌷' },
-  { k: '영어', e: '📕', c: '#F87171', f: '🌹' },
-  { k: '수학', e: '📗', c: '#34D399', f: '🍀' },
-  { k: '통합사회', e: '📙', c: '#FBBF24', f: '🌻' },
-  { k: '통합과학', e: '🔬', c: '#A78BFA', f: '🌼' },
-  { k: '한국사', e: '📜', c: '#F472B6', f: '🌸' },
+// [수정] 과목을 직접 추가·숨기기 할 수 있게: 기본 6과목 + state.subjects(학생이 바꾼 목록)
+const BASE_SUBJECTS = [
+  { k: '국어', e: '📘', c: '#60A5FA' },
+  { k: '영어', e: '📕', c: '#F87171' },
+  { k: '수학', e: '📗', c: '#34D399' },
+  { k: '통합사회', e: '📙', c: '#FBBF24' },
+  { k: '통합과학', e: '🔬', c: '#A78BFA' },
+  { k: '한국사', e: '📜', c: '#F472B6' },
 ];
-const SUB = Object.fromEntries(SUBJECTS.map(s => [s.k, s]));
+const SUBJ_PALETTE = ['#60A5FA', '#F87171', '#34D399', '#FBBF24', '#A78BFA', '#F472B6', '#22D3EE', '#FB923C', '#84CC16', '#818CF8', '#E879F9', '#2DD4BF', '#F59E0B', '#94A3B8', '#EF4444', '#10B981'];
+const SUBJ_EMOJIS = ['📘', '📕', '📗', '📙', '📒', '📓', '📐', '➗', '🔬', '🧪', '🧬', '🌏', '📜', '⚖️', '🗣️', '✏️', '💻', '🎨', '🎵', '🏃'];
+const _subj = { src: undefined, list: null, map: null };
+function subjData() {
+  let src = null;
+  try { src = (state && state.subjects && state.subjects.length) ? state.subjects : null; } catch (e) { src = null; }
+  if (_subj.list && _subj.src === src) return _subj;
+  const list = (src || BASE_SUBJECTS).map(x => Object.assign({}, x));
+  const obj = Object.fromEntries(list.map(x => [x.k, x]));
+  _subj.src = src; _subj.list = list;
+  _subj.map = new Proxy(obj, { get: (t, k) => t[k] || (typeof k === 'string' ? { k, e: '📚', c: '#94A3B8' } : undefined) });
+  return _subj;
+}
+Object.defineProperty(window, 'SUBJECTS', { get: () => subjData().list, configurable: true });   // 숨긴 과목 포함 (기록 표시용)
+Object.defineProperty(window, 'SUB', { get: () => subjData().map, configurable: true });
+function activeSubjects() { return SUBJECTS.filter(x => !x.hidden); }   // 지금 공부하는 과목 (선택·추천용)
 
 const DEFAULT_MSGS = [
   '오늘 버틴 이 시간이 내일의 너를 만든단다. 정말 잘했어!',
@@ -455,10 +499,11 @@ const BADGES = [
   { id: 'long60', icon: '💪', name: '1시간 몰입', desc: '한 번에 60분+', test: s => s.sessions.some(x => x.ok && x.min >= 60) },
   { id: 'day3h', icon: '🚀', name: '하루 3시간', desc: '하루 180분+', test: s => Object.keys(s.daily).some(d => dayTotal(d) >= 180) },
   { id: 'h10', icon: '⏰', name: '10시간', desc: '누적 10시간', test: () => totalMinutes() >= 600 },
-  { id: 'all6', icon: '🌈', name: '골고루', desc: '6과목 모두 공부', test: s => SUBJECTS.every(x => s.sessions.some(y => y.ok && y.sub === x.k)) },
+  { id: 'all6', icon: '🌈', name: '골고루', desc: '6과목 이상 공부', test: s => new Set(s.sessions.filter(y => y.ok).map(y => y.sub)).size >= 6 },
   { id: 'todo100', icon: '✅', name: '목표 완벽', desc: '하루 목표 100%', test: s => Object.values(s.todos).some(l => l.length >= 2 && l.every(t => t.done)) },
   { id: 'tree1', icon: '🌳', name: '첫 큰 나무', desc: '나무 1그루 완성', test: s => s.forest && s.forest.trees.length >= 1 },
   { id: 'tree5', icon: '🏞️', name: '작은 숲', desc: '나무 5그루 완성', test: s => s.forest && s.forest.trees.length >= 5 },
+  { id: 'xmas', icon: '🎄', name: '크리스마스 공부', desc: '12월 25일에 목표 달성', test: s => s.sessions.some(x => x.ok && x.d && x.d.slice(5) === '12-25') },
 ];
 
 /* ================= 날짜·포맷 ================= */
@@ -484,7 +529,8 @@ function defaultState() {
     forest: emptyForest(),    // { trees: [{sp, done, leaves}], cur: {sp, days: [...], leaves} }
     subject: '국어', mode: 'auto', freeGoal: 30,
     cycle: { goal: 30, sets: 3, brk: 5 },
-    auto: Object.fromEntries(SUBJECTS.map(s => [s.k, { goal: 30, streak: 0, last: null, next: null, nextFrom: null }])),
+    auto: Object.fromEntries(BASE_SUBJECTS.map(s => [s.k, { goal: 30, streak: 0, last: null, next: null, nextFrom: null }])),
+    subjects: null,  // [추가] 학생이 바꾼 과목 목록 [{k, e, c, hidden}] (null = 기본 6과목)
     totalSuccess: 0, totalFail: 0,
     daily: {},       // { 'YYYY-MM-DD': { 국어: 30, ... } }
     sessions: [],    // { d, t, sub, min, ok, why, mode }
@@ -501,8 +547,9 @@ function migrate(s) {
   if (!Array.isArray(o.settings.messages) || !o.settings.messages.length) o.settings.messages = DEFAULT_MSGS.slice();
   o.cycle = Object.assign(defaultState().cycle, s.cycle || {});
   o.auto = o.auto || {};
-  SUBJECTS.forEach(x => { if (!o.auto[x.k]) o.auto[x.k] = { goal: 30, streak: 0, last: null, next: null, nextFrom: null }; });
-  if (!SUB[o.subject]) o.subject = '국어';
+  if (!Array.isArray(o.subjects)) o.subjects = null;
+  (o.subjects || BASE_SUBJECTS).forEach(x => { if (!o.auto[x.k]) o.auto[x.k] = { goal: 30, streak: 0, last: null, next: null, nextFrom: null }; });
+  if (!o.subject) o.subject = '국어';
   ['daily', 'todos', 'badges'].forEach(k => { if (!o[k] || typeof o[k] !== 'object') o[k] = {}; });
   if (!Array.isArray(o.sessions)) o.sessions = [];
   if (!Array.isArray(o.ddays)) o.ddays = [];
@@ -616,6 +663,7 @@ function bestStreak() {
   return best;
 }
 function autoInfo(sub) {
+  if (!state.auto[sub]) state.auto[sub] = { goal: 30, streak: 0, last: null, next: null, nextFrom: null };
   const a = state.auto[sub];
   if (a.next && a.nextFrom && a.nextFrom <= today()) { a.goal = a.next; a.next = null; a.nextFrom = null; save(); }
   const t = today();
@@ -636,19 +684,20 @@ function subjectTotals(from, to) {
   return r;
 }
 
-/* ================= 나무 & 숲 ================= */
+/* ================= 나무 & 숲 (포근한 3D 카툰풍 그림) ================= */
 const TREE_DAYS = 30;   // 30일 달성하면 큰 나무 1그루 완성
+// c: 잎 [밝은, 중간, 어두운]  t: 줄기 [밝은, 어두운]  a: 잎 하나(목표 달성) 모양
 const SPECIES = [
-  { n: '느티나무', shape: 'round', leaf: ['#43A047', '#66BB6A', '#4CAF50'], trunk: '#8D6E63', desc: '마을을 지키는 든든한 정자나무' },
-  { n: '밤나무', shape: 'round', leaf: ['#558B2F', '#689F38', '#7CB342'], trunk: '#795548', extra: 'burr', desc: '가을이면 알밤이 툭툭' },
-  { n: '소나무', shape: 'pine', leaf: ['#2E7D32', '#388E3C', '#1B5E20'], trunk: '#A1887F', desc: '사계절 푸른 끈기의 상징' },
-  { n: '은행나무', shape: 'tall', leaf: ['#C0CA33', '#D4E157', '#AFB42B'], trunk: '#8D6E63', desc: '수천 년을 버티는 살아있는 화석' },
-  { n: '벚나무', shape: 'round', leaf: ['#F8BBD0', '#F48FB1', '#81C784'], trunk: '#6D4C41', desc: '봄이면 꽃비가 내리는 나무' },
-  { n: '단풍나무', shape: 'round', leaf: ['#E53935', '#FB8C00', '#F4511E'], trunk: '#6D4C41', desc: '노력이 곱게 물드는 나무' },
-  { n: '자작나무', shape: 'tall', leaf: ['#9CCC65', '#AED581', '#8BC34A'], trunk: '#F1EFEA', extra: 'birch', desc: '하얀 껍질의 숲속 귀족' },
-  { n: '사과나무', shape: 'round', leaf: ['#7CB342', '#8BC34A', '#689F38'], trunk: '#795548', extra: 'apple', desc: '노력의 열매가 주렁주렁' },
-  { n: '메타세쿼이아', shape: 'cone', leaf: ['#7CB342', '#689F38', '#9CCC65'], trunk: '#8D6E63', desc: '하늘까지 곧게 뻗는 나무' },
-  { n: '전나무', shape: 'cone', leaf: ['#1B5E20', '#2E7D32', '#33691E'], trunk: '#6D4C41', desc: '겨울에도 꿋꿋한 숲의 기둥' },
+  { n: '느티나무', c: ['#9BDB6F', '#5DB247', '#327F33'], t: ['#B08D6E', '#6B513E'], a: 'leaf', desc: '마을을 지키는 든든한 정자나무' },
+  { n: '밤나무', c: ['#86C95E', '#4C9B3A', '#2B6A2C'], t: ['#9C7A5C', '#5E4433'], a: 'leaf', desc: '가을이면 알밤이 툭툭' },
+  { n: '소나무', c: ['#6FB06A', '#3F8350', '#235638'], t: ['#C9784A', '#7E3F25'], a: 'needle', desc: '사계절 푸른 끈기의 상징' },
+  { n: '은행나무', c: ['#FFE77A', '#F5C534', '#D3921A'], t: ['#A89A86', '#6C6152'], a: 'fan', desc: '수천 년을 버티는 살아있는 화석' },
+  { n: '벚나무', c: ['#FFE0EC', '#F8AFCB', '#DE7FA7'], t: ['#7E5C55', '#4A3430'], a: 'leaf', desc: '봄이면 꽃비가 내리는 나무' },
+  { n: '단풍나무', c: ['#FF9E5A', '#F25A30', '#B8321F'], t: ['#8E6A55', '#55392C'], a: 'maple', desc: '노력이 곱게 물드는 나무' },
+  { n: '자작나무', c: ['#E2F49A', '#B2DB6A', '#7FB64C'], t: ['#FBFAF5', '#C9C5B9'], a: 'leaf', desc: '하얀 껍질의 숲속 귀족' },
+  { n: '사과나무', c: ['#97D86F', '#5BB345', '#3A8634'], t: ['#A07B5B', '#5F4331'], a: 'leaf', desc: '노력의 열매가 주렁주렁' },
+  { n: '메타세쿼이아', c: ['#B8D67A', '#86AE4C', '#58782F'], t: ['#B9714D', '#6D3B26'], a: 'needle', desc: '하늘까지 곧게 뻗는 나무' },
+  { n: '전나무', c: ['#5FAE87', '#2F7B5D', '#1A5140'], t: ['#8C6A52', '#4F3929'], a: 'needle', desc: '겨울에도 꿋꿋한 숲의 기둥' },
 ];
 const STAGES = [{ d: 0, n: '씨앗' }, { d: 1, n: '새싹' }, { d: 5, n: '묘목' }, { d: 12, n: '어린 나무' }, { d: 20, n: '청년 나무' }, { d: 30, n: '큰 나무' }];
 function stageIdx(days) { let i = 0; STAGES.forEach((s, j) => { if (days >= s.d) i = j; }); return i; }
@@ -682,74 +731,324 @@ function rebuildForest(s) {
 }
 
 function rng(seed) { return function () { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
-function leafPath(x, y, s, rot, color) {
-  return `<path d="M0 0 q${(s * .9).toFixed(1)} ${(-s * .9).toFixed(1)} 0 ${(-s * 2).toFixed(1)} q${(-s * .9).toFixed(1)} ${(s * .9).toFixed(1)} 0 ${(s * 2).toFixed(1)}z" transform="translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${rot.toFixed(0)})" fill="${color}"/>`;
+const F1 = v => (+v).toFixed(1);
+let TSEQ = 0;
+
+/* ---- 그리기 도구 ---- */
+function defs(i, sp) {
+  return `<defs>
+    <radialGradient id="cg${i}" cx="38%" cy="30%" r="75%"><stop offset="0" stop-color="${sp.c[0]}"/><stop offset=".55" stop-color="${sp.c[1]}"/><stop offset="1" stop-color="${sp.c[2]}"/></radialGradient>
+    <linearGradient id="tg${i}" x1="0" x2="1"><stop offset="0" stop-color="${sp.t[0]}"/><stop offset=".55" stop-color="${sp.t[0]}"/><stop offset="1" stop-color="${sp.t[1]}"/></linearGradient>
+  </defs>`;
 }
-// 나무 그리기: days(0~30)로 크기, leaves로 잎 개수
-function treeSVG(spIdx, days, leaves, o = {}) {
-  const sp = SPECIES[spIdx % SPECIES.length];
-  const p = Math.min(1, days / TREE_DAYS);
-  const ground = o.ground === false ? '' : `<ellipse cx="100" cy="182" rx="${(36 + 44 * p).toFixed(0)}" ry="7" fill="#C5E1A5" opacity=".8"/>`;
-  const wrap = g => `<svg viewBox="${o.viewBox || '0 0 200 200'}" class="w-full h-full">${ground}${g}</svg>`;
-  if (days === 0 && leaves === 0) {
-    return wrap(`<path d="M80 182 q20 -16 40 0z" fill="#A1887F"/><ellipse cx="100" cy="173" rx="5" ry="3.6" fill="#6D4C41"/><path d="M100 170 q1 -5 4 -6" stroke="#7CB342" stroke-width="1.6" fill="none" stroke-linecap="round"/>`);
+// 뿌리가 살짝 퍼진 굵은 줄기
+function trunk(i, x, base, top, wb, wt, lean = 0, bark = true) {
+  const p = `M${F1(x - wb)} ${base} Q${F1(x - wb * .55)} ${base - 5} ${F1(x - wb * .5)} ${base - 14} L${F1(x - wt + lean)} ${top} L${F1(x + wt + lean)} ${top} L${F1(x + wb * .5)} ${base - 14} Q${F1(x + wb * .55)} ${base - 5} ${F1(x + wb)} ${base} Z`;
+  let s = `<path d="${p}" fill="url(#tg${i})"/>`;
+  if (bark) s += `<path d="M${F1(x - wt * .2 + lean * .5)} ${top + 8} q-2 ${F1((base - top) * .35)} 1 ${F1((base - top) * .7)}" stroke="#000" stroke-opacity=".15" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+    <path d="M${F1(x + wt * .45 + lean * .4)} ${top + 18} q1.5 ${F1((base - top) * .25)} -.5 ${F1((base - top) * .5)}" stroke="#000" stroke-opacity=".12" stroke-width="1.3" fill="none" stroke-linecap="round"/>`;
+  return s;
+}
+function limb(i, d, w) { return `<path d="${d}" stroke="url(#tg${i})" stroke-width="${w}" fill="none" stroke-linecap="round"/><path d="${d}" stroke="#000" stroke-opacity=".08" stroke-width="${w * .35}" fill="none" stroke-linecap="round" transform="translate(${w * .25} 0)"/>`; }
+// 몽글몽글한 잎 덩어리 (그림자 → 본체 → 하이라이트)
+function puffs(i, sp, list) {
+  let sh = '', body = '', hi = '';
+  list.forEach(([x, y, rx, ry]) => {
+    ry = ry || rx;
+    sh += `<ellipse cx="${F1(x + 2)}" cy="${F1(y + 4)}" rx="${F1(rx)}" ry="${F1(ry)}" fill="${sp.c[2]}"/>`;
+    body += `<ellipse cx="${F1(x)}" cy="${F1(y)}" rx="${F1(rx)}" ry="${F1(ry)}" fill="url(#cg${i})"/>`;
+    hi += `<ellipse cx="${F1(x - rx * .3)}" cy="${F1(y - ry * .38)}" rx="${F1(rx * .42)}" ry="${F1(ry * .26)}" fill="#fff" opacity=".16"/>`;
+  });
+  return sh + body + hi;
+}
+// 층층이 처진 원뿔 (전나무·메타세쿼이아)
+function tiers(uid, sp, x, top, base, n, w0, w1, droop) {
+  let s = '';
+  for (let k = 0; k < n; k++) {
+    const t = k / (n - 1 || 1);
+    const yt = top + (base - top) * (k / n) * .92, yb = top + (base - top) * ((k + 1) / n) + 4, w = w0 + (w1 - w0) * t;
+    const d = `M${x} ${F1(yt)} L${F1(x - w)} ${F1(yb)} Q${F1(x - w * .5)} ${F1(yb + droop)} ${x} ${F1(yb - 2)} Q${F1(x + w * .5)} ${F1(yb + droop)} ${F1(x + w)} ${F1(yb)} Z`;
+    s += `<path d="${d}" fill="${sp.c[2]}" transform="translate(2 4)"/><path d="${d}" fill="${k % 2 ? sp.c[1] : 'url(#cg' + uid + ')'}"/>`;
+    s += `<path d="M${F1(x - w * .15)} ${F1(yt + (yb - yt) * .35)} L${F1(x - w * .62)} ${F1(yb - 3)}" stroke="#fff" stroke-opacity=".22" stroke-width="2.5" stroke-linecap="round"/>`;
   }
-  const baseY = 180, trunkH = 16 + 86 * p, trunkW = 2.2 + 11 * p, topY = baseY - trunkH;
-  const young = p < .17;
-  const trunkC = young ? '#7CB342' : sp.trunk;
-  let g = '';
-  // 수관(잎이 붙는 영역)
-  let ells = [], tri = null;
-  if (sp.shape === 'round') {
-    const rx = 12 + 60 * p, ry = 9 + 44 * p, cy = topY - ry * .2;
-    ells = [[100, cy, rx, ry]];
-    if (p > .35) ells.push([100 - rx * .55, cy + ry * .3, rx * .55, ry * .6], [100 + rx * .55, cy + ry * .3, rx * .55, ry * .6]);
-  } else if (sp.shape === 'tall') {
-    const rx = 9 + 32 * p, ry = 12 + 50 * p;
-    ells = [[100, topY - ry * .2, rx, ry]];
-  } else if (sp.shape === 'pine') {
-    const w = 12 + 52 * p, h = 6 + 16 * p;
-    ells = [[100 - 6 * p, topY + 2, w, h], [100 + 8 * p, topY - 6 - 24 * p, w * .78, h * .9], [100 - 2 * p, topY - 10 - 46 * p, w * .52, h * .8]];
-  } else {
-    const coneH = 18 + 128 * p, half = 9 + 40 * p, bottom = baseY - trunkH * .25;
-    tri = [[100, bottom - coneH], [100 - half, bottom], [100 + half, bottom]];
+  return s;
+}
+// 목표 달성으로 생긴 잎 하나 (종마다 모양이 달라요)
+function accent(type, x, y, s, rot, color) {
+  const tr = `transform="translate(${F1(x)} ${F1(y)}) rotate(${rot | 0})"`;
+  if (type === 'fan') return `<path ${tr} d="M0 0 L${F1(-s)} ${F1(-s * 1.3)} Q0 ${F1(-s * 1.9)} ${F1(s)} ${F1(-s * 1.3)} Z" fill="${color}" stroke="#C98A12" stroke-width=".5"/>`;
+  if (type === 'maple') { let d = ''; for (let k = 0; k < 5; k++) { const a = (k * 72 - 90) * Math.PI / 180, b = a + .63; d += `${k ? 'L' : 'M'}${F1(Math.cos(a) * s * 1.3)} ${F1(Math.sin(a) * s * 1.3)} L${F1(Math.cos(b) * s * .5)} ${F1(Math.sin(b) * s * .5)} `; } return `<path ${tr} d="${d}Z" fill="${color}"/>`; }
+  if (type === 'petal') return `<g ${tr}>${[0, 72, 144, 216, 288].map(a => `<ellipse cx="0" cy="${F1(-s * .55)}" rx="${F1(s * .38)}" ry="${F1(s * .55)}" transform="rotate(${a})" fill="#fff"/>`).join('')}<circle r="${F1(s * .25)}" fill="#F48FB1"/></g>`;
+  if (type === 'needle') return `<g ${tr} stroke="${color}" stroke-width="1.2" stroke-linecap="round">${[-35, -12, 12, 35].map(a => `<line x1="0" y1="0" x2="${F1(Math.sin(a * Math.PI / 180) * s * 1.5)}" y2="${F1(-Math.cos(a * Math.PI / 180) * s * 1.5)}"/>`).join('')}</g>`;
+  return `<path ${tr} d="M0 0 q${F1(s * .8)} ${F1(-s * .8)} 0 ${F1(-s * 1.9)} q${F1(-s * .8)} ${F1(s * .8)} 0 ${F1(s * 1.9)}z" fill="${color}"/>`;
+}
+
+/* ---- 종마다 다른 모양 (다 자란 모습, 200×200 기준, 땅 y=182) ---- */
+const ART = [
+  // 0 느티나무: 짧고 굵은 줄기가 부채처럼 갈라지고, 넓게 퍼진 우산 모양
+  (i, sp) => ({
+    back: trunk(i, 100, 182, 118, 13, 8) + limb(i, 'M100 124 Q78 104 58 92', 7) + limb(i, 'M100 122 Q122 100 144 90', 7) + limb(i, 'M100 120 Q98 98 100 78', 6),
+    pf: [[100, 80, 34, 28], [62, 92, 28, 24], [138, 92, 28, 24], [80, 64, 24, 20], [122, 64, 24, 20], [34, 104, 20, 17], [166, 104, 20, 17], [100, 104, 30, 18], [55, 112, 20, 14], [145, 112, 20, 14]],
+  }),
+  // 1 밤나무: 둥글고 빽빽한 짙은 초록, 밤송이
+  (i, sp) => ({
+    back: trunk(i, 100, 182, 120, 11, 7) + limb(i, 'M100 128 Q86 112 76 100', 5) + limb(i, 'M100 126 Q114 110 126 98', 5),
+    pf: [[100, 84, 36], [70, 98, 28], [130, 98, 28], [84, 62, 26], [118, 62, 26], [100, 46, 22], [60, 76, 22], [140, 76, 22], [100, 112, 28, 18]],
+  }),
+  // 2 소나무: 붉은 껍질이 구불구불, 납작한 구름 같은 솔잎 층
+  (i, sp) => ({
+    back: `<path d="M94 182 Q96 160 88 140 Q80 118 96 98 Q108 84 104 58 L112 58 Q116 86 104 102 Q92 120 100 140 Q108 162 108 182 Z" fill="url(#tg${i})"/>`
+      + [[95, 170], [92, 152], [90, 130], [100, 110], [106, 84]].map(([x, y]) => `<path d="M${x - 4} ${y} l8 -2" stroke="#6E321C" stroke-opacity=".45" stroke-width="1.6" stroke-linecap="round"/>`).join('')
+      + limb(i, 'M92 124 Q70 116 52 112', 4) + limb(i, 'M104 98 Q128 88 150 86', 4) + limb(i, 'M108 72 Q90 62 74 56', 3),
+    pf: [[104, 52, 32, 13], [62, 108, 34, 13], [146, 82, 32, 12], [76, 54, 22, 10], [128, 40, 22, 10], [100, 30, 18, 9], [44, 104, 16, 8]],
+  }),
+  // 3 은행나무: 곧게 솟은 달걀 모양, 노란 부채잎
+  (i, sp) => ({
+    back: trunk(i, 100, 182, 110, 10, 6) + limb(i, 'M100 130 Q88 116 82 100', 4) + limb(i, 'M100 122 Q112 108 118 92', 4),
+    pf: [[100, 92, 30, 34], [100, 50, 24, 26], [82, 74, 22, 24], [118, 74, 22, 24], [100, 26, 16, 16], [80, 110, 20, 16], [120, 110, 20, 16]],
+    drop: '#F5C534',
+  }),
+  // 4 벚나무: 짙은 줄기가 넓게 갈라지고, 분홍 꽃구름 + 꽃잎이 흩날려요
+  (i, sp) => ({
+    back: trunk(i, 100, 182, 128, 11, 7, -2) + limb(i, 'M98 134 Q74 120 50 108', 6) + limb(i, 'M100 132 Q128 116 152 104', 6) + limb(i, 'M99 130 Q92 108 86 84', 5) + limb(i, 'M100 130 Q112 106 120 82', 5),
+    pf: [[100, 82, 32, 26], [58, 98, 28, 22], [142, 98, 28, 22], [78, 66, 24, 20], [124, 66, 24, 20], [36, 108, 18, 14], [164, 108, 18, 14], [100, 108, 26, 14]],
+    texture: (R) => { let s = ''; for (let k = 0; k < 14; k++) s += accent('petal', 40 + R() * 120, 60 + R() * 56, 2.6, R() * 360); return s; },
+    drop: '#F8AFCB',
+  }),
+  // 5 단풍나무: 둥글게 넓은 붉은 잎, 별 모양 단풍잎
+  (i, sp) => ({
+    back: trunk(i, 100, 182, 122, 10, 7) + limb(i, 'M100 130 Q80 114 66 102', 5) + limb(i, 'M100 128 Q122 112 136 100', 5),
+    pf: [[100, 80, 34, 28], [66, 96, 28, 22], [134, 96, 28, 22], [82, 60, 24, 20], [118, 60, 24, 20], [100, 44, 20, 16], [48, 108, 18, 14], [152, 108, 18, 14]],
+    drop: '#F25A30',
+  }),
+  // 6 자작나무: 하얀 줄기 두 개 + 검은 무늬, 가볍고 성긴 연두 잎
+  (i, sp) => {
+    const marks = (x, from, to) => { let s = ''; for (let y = from; y < to; y += 13) s += `<path d="M${x - 3} ${y} q3 1.5 6 0" stroke="#3B3833" stroke-width="1.8" fill="none" stroke-linecap="round"/>`; return s; };
+    return {
+      back: trunk(i, 92, 182, 64, 7, 4, -4, false) + marks(90, 80, 176) + trunk(i, 114, 182, 84, 5, 3, 6, false) + marks(117, 96, 176) + limb(i, 'M90 110 Q76 98 68 86', 2.5) + limb(i, 'M116 120 Q130 108 138 98', 2.2),
+      pf: [[92, 52, 22, 24], [72, 80, 18, 20], [120, 76, 20, 22], [104, 34, 15, 16], [64, 106, 14, 14], [138, 102, 15, 15], [98, 94, 14, 12]],
+    };
+  },
+  // 7 사과나무: 낮고 동그란 나무, 반짝이는 빨간 사과
+  (i, sp) => ({
+    back: trunk(i, 100, 182, 130, 10, 7) + limb(i, 'M100 136 Q84 124 74 112', 5) + limb(i, 'M100 134 Q118 122 128 110', 5),
+    pf: [[100, 96, 36, 30], [66, 108, 26, 20], [134, 108, 26, 20], [82, 76, 26, 22], [120, 76, 26, 22], [100, 60, 22, 18], [100, 122, 28, 14]],
+  }),
+  // 8 메타세쿼이아: 하늘로 곧게 뻗은 좁은 원뿔, 깃털 같은 잎
+  (i, sp) => ({
+    back: trunk(i, 100, 182, 30, 9, 3),
+    cone: { top: 14, base: 160, n: 7, w0: 9, w1: 40, droop: 6 },
+  }),
+  // 9 전나무: 아래로 처진 층층 원뿔, 짙은 청록
+  (i, sp) => ({
+    back: trunk(i, 100, 182, 120, 10, 6),
+    cone: { top: 22, base: 160, n: 5, w0: 18, w1: 64, droop: 9 },
+  }),
+];
+
+/* ---- 나무마다 꽃 5송이 · 열매 5개 (어린 나무부터 꽃, 청년 나무부터 열매) ---- */
+const FF = [
+  { fl: ['연두 꽃송이', 'tiny'], fr: ['작은 열매', 'nutlet'] },
+  { fl: ['밤꽃', 'spike'], fr: ['밤송이', 'burr'] },
+  { fl: ['송화', 'pollen'], fr: ['솔방울', 'pinecone'] },
+  { fl: ['은행꽃', 'tinyY'], fr: ['은행알', 'ginkgo'] },
+  { fl: ['벚꽃', 'sakura'], fr: ['버찌', 'cherry'] },
+  { fl: ['단풍꽃', 'redtiny'], fr: ['날개 열매', 'samara'] },
+  { fl: ['꼬리꽃', 'catkin'], fr: ['자작 열매', 'birchcone'] },
+  { fl: ['사과꽃', 'appleF'], fr: ['사과', 'apple'] },
+  { fl: ['수꽃 이삭', 'beads'], fr: ['둥근 구과', 'metacone'] },
+  { fl: ['붉은 꽃눈', 'firbud'], fr: ['곧게 선 솔방울', 'fircone'] },
+];
+const FLOWER_DAY = 12, FRUIT_DAY = 20;
+function petals(r, fill, center, edge) {
+  return [0, 72, 144, 216, 288].map(a => `<ellipse cx="0" cy="${F1(-r * .58)}" rx="${F1(r * .42)}" ry="${F1(r * .58)}" transform="rotate(${a})" fill="${fill}" ${edge ? `stroke="${edge}" stroke-width=".6"` : ''}/>`).join('') + `<circle r="${F1(r * .28)}" fill="${center}"/>`;
+}
+function drawFF(t, x, y) {
+  const T = `transform="translate(${F1(x)} ${F1(y)}) scale(1.6)"`;   // [수정] 잘 보이게 1.6배
+  switch (t) {
+    case 'tiny': return `<g ${T}><circle cx="-2.6" r="2.3" fill="#E4F59A"/><circle cx="2.6" r="2.3" fill="#CDE97A"/><circle cy="-2.8" r="2.5" fill="#F2FBBF"/></g>`;
+    case 'tinyY': return `<g ${T}><circle cx="-2.4" r="2.2" fill="#E9F0A0"/><circle cx="2.4" r="2.2" fill="#D9E482"/><circle cy="-2.6" r="2.3" fill="#F6F8C8"/></g>`;
+    case 'redtiny': return `<g ${T}><path d="M0 0 l-3 -5 M0 0 l3 -5 M0 0 l0 -6" stroke="#7B3B2A" stroke-width=".8"/><circle cx="-3" cy="-5.5" r="2" fill="#E53935"/><circle cx="3" cy="-5.5" r="2" fill="#FF7043"/><circle cy="-7" r="2.1" fill="#C62828"/></g>`;
+    case 'spike': return `<g ${T}><path d="M0 0 q4 7 1.5 16 q-1.5 3 -3 0 q-2.5 -8 1.5 -16z" fill="#F4EBB8" stroke="#D6C677" stroke-width=".7"/><path d="M-.5 4 l2 0 M-1 8 l2.5 0 M-1 12 l2 0" stroke="#D6C677" stroke-width=".6"/></g>`;
+    case 'pollen': return `<g ${T}>${[-3, 0, 3].map((dx, k) => `<rect x="${dx - 1.3}" y="${-7 + (k % 2) * 1.5}" width="2.6" height="6.5" rx="1.3" fill="${k % 2 ? '#F2D24B' : '#E9C23A'}"/>`).join('')}</g>`;
+    case 'sakura': return `<g ${T}>${petals(5.2, '#FFE3EE', '#F06292', '#F8BBD0')}</g>`;
+    case 'appleF': return `<g ${T}>${petals(5, '#FFFFFF', '#F9D45C', '#F4B6C8')}</g>`;
+    case 'catkin': return `<g ${T}><path d="M0 0 q3 6 1 14 q-1 2.5 -2.4 0 q-2 -7 1.4 -14z" fill="#A9794A"/><path d="M-1 3 l2.4 .6 M-1.2 6.5 l2.6 .6 M-1.2 10 l2.4 .6" stroke="#7A5332" stroke-width=".7"/></g>`;
+    case 'beads': return `<g ${T}><path d="M0 0 L0 13" stroke="#8D6E4C" stroke-width=".7"/>${[2.5, 6, 9.5, 13].map(y => `<circle cy="${y}" r="1.7" fill="#9C6B40"/>`).join('')}</g>`;
+    case 'firbud': return `<g ${T}><ellipse cy="-3" rx="2.6" ry="4" fill="#C2453D"/><ellipse cx="-.8" cy="-4.2" rx=".9" ry="1.4" fill="#fff" opacity=".35"/></g>`;
+    case 'nutlet': return `<g ${T}><path d="M0 0 q-5 -1 -6 -5 q4 0 6 5z" fill="#9CCC65"/><circle cx="1" cy="1" r="2.8" fill="#8D6E4C"/><circle cx=".2" cy=".2" r=".9" fill="#fff" opacity=".35"/></g>`;
+    case 'burr': return `<g ${T}><circle r="5.2" fill="#B9C94A"/>${[...Array(10)].map((_, j) => { const a = j * 36 * Math.PI / 180; return `<line x1="${F1(Math.cos(a) * 4)}" y1="${F1(Math.sin(a) * 4)}" x2="${F1(Math.cos(a) * 7.5)}" y2="${F1(Math.sin(a) * 7.5)}" stroke="#8E9A2E" stroke-width="1.2" stroke-linecap="round"/>`; }).join('')}<circle r="2.4" cx="1" cy="1" fill="#7A4A26"/></g>`;
+    case 'pinecone': return `<g ${T}><ellipse cy="5" rx="4.2" ry="6.2" fill="#8B5A2B"/>${[1.5, 4.5, 7.5].map(y => `<path d="M-3.6 ${y} q3.6 2.4 7.2 0" stroke="#5E3A1A" stroke-width=".9" fill="none"/>`).join('')}<path d="M-1.5 0 l1.5 4 l1.5 -4" stroke="#5E3A1A" stroke-width=".7" fill="none"/></g>`;
+    case 'ginkgo': return `<g ${T}><path d="M0 -4 q-2 3 -3 6 M0 -4 q2 3 3 6" stroke="#7A6A3A" stroke-width=".8" fill="none"/><circle cx="-3" cy="4" r="3.1" fill="#F2B233"/><circle cx="3" cy="4" r="3.1" fill="#E89E22"/><circle cx="-4" cy="3" r=".9" fill="#fff" opacity=".45"/></g>`;
+    case 'cherry': return `<g ${T}><path d="M0 -6 q-2 4 -3.5 9 M0 -6 q2 4 3.5 9" stroke="#5D7A3A" stroke-width=".9" fill="none"/><circle cx="-3.5" cy="4.5" r="3" fill="#B71C1C"/><circle cx="3.5" cy="4.5" r="3" fill="#D32F2F"/><circle cx="-4.4" cy="3.6" r=".9" fill="#fff" opacity=".6"/><circle cx="2.6" cy="3.6" r=".9" fill="#fff" opacity=".6"/></g>`;
+    case 'samara': return `<g ${T}><ellipse cx="-4" cy="4" rx="2.4" ry="5.5" transform="rotate(35 -4 4)" fill="#D2693B" opacity=".9"/><ellipse cx="4" cy="4" rx="2.4" ry="5.5" transform="rotate(-35 4 4)" fill="#C0552E" opacity=".9"/><circle r="1.8" fill="#8E3B1F"/></g>`;
+    case 'birchcone': return `<g ${T}><path d="M0 0 l0 2" stroke="#7A6A4A" stroke-width=".8"/><ellipse cy="7" rx="2.2" ry="5.2" fill="#8D7B52"/><path d="M-1.8 5 l3.6 0 M-1.8 8 l3.6 0" stroke="#6A5A3A" stroke-width=".6"/></g>`;
+    case 'apple': return `<g ${T}><circle r="5.6" fill="#B71C1C" opacity=".35" transform="translate(1.2 1.4)"/><circle r="5.6" fill="#E53935"/><ellipse cx="-2" cy="-2.2" rx="1.6" ry="1.1" fill="#fff" opacity=".75"/><path d="M0 -5.5 q1 -3 3 -3.5" stroke="#5D4037" stroke-width="1.1" fill="none"/><path d="M1.5 -7.5 q3 -1 4 1 q-3 1 -4 -1z" fill="#66BB6A"/></g>`;
+    case 'metacone': return `<g ${T}><path d="M0 0 l0 2" stroke="#6A5A3A" stroke-width=".8"/><circle cy="5.5" r="3.6" fill="#7E8C48"/><path d="M-3.2 5.5 l6.4 0 M0 2 l0 7" stroke="#5A6630" stroke-width=".7"/></g>`;
+    case 'fircone': return `<g ${T}><ellipse cy="-6" rx="3.2" ry="7" fill="#6A4C7E"/>${[-10, -6.5, -3].map(y => `<path d="M-2.8 ${y} q2.8 1.8 5.6 0" stroke="#4A3358" stroke-width=".8" fill="none"/>`).join('')}<ellipse cx="-1" cy="-9" rx=".8" ry="1.6" fill="#fff" opacity=".3"/></g>`;
   }
-  // 줄기
-  g += `<path d="M${100 - trunkW / 2} ${baseY} L${100 - trunkW * .3} ${topY} L${100 + trunkW * .3} ${topY} L${100 + trunkW / 2} ${baseY}Z" fill="${trunkC}" ${sp.extra === 'birch' && !young ? 'stroke="#C9C4BA" stroke-width="1"' : ''}/>`;
-  if (sp.extra === 'birch' && !young) for (let i = 1; i < 5; i++) { const y = baseY - trunkH * i / 5; g += `<path d="M${100 - trunkW * .35} ${y} l${trunkW * .4} 1.5" stroke="#4E4A45" stroke-width="1.4" stroke-linecap="round"/>`; }
-  // 가지
-  if (p > .25 && !tri) {
-    const bw = Math.max(1.2, trunkW * .32), cy = ells[0][1], rx = ells[0][2];
-    g += `<path d="M100 ${topY + trunkH * .15} Q${100 - rx * .3} ${cy + 6} ${100 - rx * .6} ${cy}" stroke="${trunkC}" stroke-width="${bw}" fill="none" stroke-linecap="round"/>`;
-    g += `<path d="M100 ${topY + trunkH * .05} Q${100 + rx * .3} ${cy + 4} ${100 + rx * .62} ${cy - 4}" stroke="${trunkC}" stroke-width="${bw}" fill="none" stroke-linecap="round"/>`;
-  }
-  // 수관 실루엣 (잎이 쌓일수록 울창해짐)
-  const op = (.16 + .3 * p).toFixed(2);
-  if (tri) g += `<path d="M${tri[0].join(' ')} L${tri[1].join(' ')} L${tri[2].join(' ')}Z" fill="${sp.leaf[0]}" opacity="${op}"/>`;
-  else ells.forEach(e => { g += `<ellipse cx="${e[0].toFixed(1)}" cy="${e[1].toFixed(1)}" rx="${e[2].toFixed(1)}" ry="${e[3].toFixed(1)}" fill="${sp.leaf[0]}" opacity="${op}"/>`; });
-  // 잎
-  const R = rng(spIdx * 7919 + 101);
-  const n = Math.min(leaves, o.maxLeaves || 160);
-  const s = 3.2 + 3.2 * p;
-  const areas = ells.map(e => e[2] * e[3]), tot = areas.reduce((a, b) => a + b, 0);
-  for (let i = 0; i < n; i++) {
-    const u = R(), v = R(), w = R(), r1 = R(), r2 = R();
-    let x, y;
-    if (tri) { let a = u, b = v; if (a + b > 1) { a = 1 - a; b = 1 - b; } x = tri[0][0] + a * (tri[1][0] - tri[0][0]) + b * (tri[2][0] - tri[0][0]); y = tri[0][1] + a * (tri[1][1] - tri[0][1]) + b * (tri[2][1] - tri[0][1]) + s; }
-    else { let k = 0, acc = w * tot; while (k < ells.length - 1 && acc > areas[k]) { acc -= areas[k]; k++; } const e = ells[k], ang = u * Math.PI * 2, rad = Math.sqrt(v) * .95; x = e[0] + e[2] * rad * Math.cos(ang); y = e[1] + e[3] * rad * Math.sin(ang) + s; }
-    g += leafPath(x, y, s * (.8 + r1 * .4), r2 * 360, sp.leaf[Math.floor(R() * sp.leaf.length)]);
-  }
-  // 열매
-  if (p >= .6 && (sp.extra === 'apple' || sp.extra === 'burr')) {
-    const F = rng(spIdx * 31 + 7), e = ells[0];
-    for (let i = 0; i < 7; i++) {
-      const ang = F() * Math.PI * 2, rad = Math.sqrt(F()) * .8, x = e[0] + e[2] * rad * Math.cos(ang), y = e[1] + e[3] * rad * Math.sin(ang);
-      g += sp.extra === 'apple'
-        ? `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3.6" fill="#E53935"/><circle cx="${(x - 1).toFixed(1)}" cy="${(y - 1.2).toFixed(1)}" r="1" fill="#fff" opacity=".7"/>`
-        : `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3.4" fill="#C0A230" stroke="#827717" stroke-width="1.2" stroke-dasharray="1 1.2"/>`;
+  return '';
+}
+// 5개 자리: 잎 덩어리(또는 원뿔) 안에서 고르게, 열매는 아래쪽에 달리게
+function ffSpots(i, art, p, kind) {
+  const R = rng(i * 97 + (kind === 'fr' ? 55 : 11)), pts = [];
+  if (art.pf) {
+    const order = art.pf.slice(0, Math.max(3, Math.ceil(art.pf.length * (.45 + .55 * p))));
+    for (let k = 0; k < 5; k++) {
+      const e = order[(k * 3 + (kind === 'fr' ? 1 : 0)) % order.length], ry = e[3] || e[2];
+      const ang = (R() * .8 + (kind === 'fr' ? .1 : -.9)) * Math.PI, rad = .35 + R() * .4;
+      pts.push([e[0] + e[2] * rad * Math.cos(ang), e[1] + ry * rad * Math.sin(ang)]);
     }
+  } else {
+    const k2 = art.cone, top = k2.top + (1 - p) * 30;
+    for (let k = 0; k < 5; k++) { const t = .3 + k * .14 + R() * .05; pts.push([100 + (R() * 2 - 1) * (k2.w0 + (k2.w1 - k2.w0) * t) * .55, top + (k2.base - top) * t]); }
   }
-  return wrap(g);
+  return pts;
+}
+
+/* ---- 하늘에 떠가는 구름 4개 ---- */
+function cloudSVG(w) {
+  return `<svg viewBox="0 0 120 60" width="${w}" height="${w / 2}"><g fill="#fff">
+    <ellipse cx="38" cy="38" rx="26" ry="16" fill="#DCEBF5" transform="translate(2 3)"/><ellipse cx="78" cy="36" rx="30" ry="18" fill="#DCEBF5" transform="translate(2 3)"/>
+    <ellipse cx="38" cy="38" rx="26" ry="16"/><ellipse cx="62" cy="26" rx="22" ry="19"/><ellipse cx="80" cy="36" rx="28" ry="17"/><ellipse cx="22" cy="42" rx="16" ry="11"/>
+    <ellipse cx="54" cy="18" rx="10" ry="5" fill="#fff" opacity=".9"/></g></svg>`;
+}
+function cloudsHTML(big) {
+  const C = big ? [[4, 6, 70, 26], [62, 2, 56, 34], [30, 20, 44, 30], [76, 26, 40, 22]] : [[2, 4, 54, 28], [70, 0, 46, 36], [36, 14, 34, 32], [84, 22, 32, 24]];
+  return `<div class="absolute inset-0 pointer-events-none overflow-hidden">${C.map(([l, t, w, s], k) => `<div class="cloud" style="left:${l}%;top:${t}%;animation-duration:${s}s;animation-delay:${-k * 5}s;opacity:${.95 - k * .08}">${cloudSVG(w)}</div>`).join('')}</div>`;
+}
+
+/* ================= 🎄 12월 25일 크리스마스 이벤트 ================= */
+// [추가] 12월 25일 하루: 눈이 내리고, 눈사람이 오고, 모든 나무가 크리스마스트리로 꾸며져요
+function isXmas() { return window.__forceXmas === true || (typeof today === 'function' && today().slice(5) === '12-25'); }
+const XMAS_COLORS = ['#FF5252', '#FFD740', '#40C4FF', '#69F0AE', '#FF80AB'];
+function xStar(x, y, r) {
+  let d = '';
+  for (let k = 0; k < 10; k++) { const a = (k * 36 - 90) * Math.PI / 180, rr = k % 2 ? r * .45 : r; d += `${k ? 'L' : 'M'}${F1(x + Math.cos(a) * rr)} ${F1(y + Math.sin(a) * rr)} `; }
+  return `<circle cx="${F1(x)}" cy="${F1(y)}" r="${F1(r * 1.6)}" fill="#FFF59D" opacity=".45" class="twinkle"/><path d="${d}Z" fill="#FFD54F" stroke="#F9A825" stroke-width="1.2" stroke-linejoin="round"/><circle cx="${F1(x - r * .2)}" cy="${F1(y - r * .25)}" r="${F1(r * .2)}" fill="#fff" opacity=".7"/>`;
+}
+// 처진 전구 줄 (2차 곡선 위에 전구를 촘촘히)
+function xGarland(x1, y1, cx, cy, x2, y2, n, seed) {
+  let s = `<path d="M${F1(x1)} ${F1(y1)} Q${F1(cx)} ${F1(cy)} ${F1(x2)} ${F1(y2)}" stroke="#3E2723" stroke-opacity=".55" stroke-width="1.1" fill="none"/>`;
+  for (let k = 1; k < n; k++) {
+    const t = k / n, x = (1 - t) * (1 - t) * x1 + 2 * (1 - t) * t * cx + t * t * x2, y = (1 - t) * (1 - t) * y1 + 2 * (1 - t) * t * cy + t * t * y2;
+    const c = XMAS_COLORS[(k + seed) % XMAS_COLORS.length];
+    s += `<g class="twinkle" style="animation-delay:${((k * 37 + seed * 13) % 16) / 10}s"><circle cx="${F1(x)}" cy="${F1(y + 1.6)}" r="4" fill="${c}" opacity=".3"/><ellipse cx="${F1(x)}" cy="${F1(y + 1.6)}" rx="1.8" ry="2.4" fill="${c}"/></g>`;
+  }
+  return s;
+}
+function xBauble(x, y, c, r) {
+  return `<path d="M${F1(x)} ${F1(y - r - 3)} l0 2" stroke="#9E9E9E" stroke-width=".8"/><rect x="${F1(x - 1.6)}" y="${F1(y - r - 1.8)}" width="3.2" height="2" rx=".6" fill="#FFC107"/>
+    <circle cx="${F1(x)}" cy="${F1(y)}" r="${r}" fill="${c}"/><circle cx="${F1(x + 1)}" cy="${F1(y + 1.2)}" r="${r}" fill="#000" opacity=".12"/><circle cx="${F1(x)}" cy="${F1(y)}" r="${r}" fill="${c}" opacity=".9"/>
+    <ellipse cx="${F1(x - r * .35)}" cy="${F1(y - r * .4)}" rx="${F1(r * .35)}" ry="${F1(r * .22)}" fill="#fff" opacity=".8"/>`;
+}
+// 나무 한 그루를 크리스마스트리로 꾸미기 (나무 그림과 같은 좌표계)
+function xmasDeco(i, art, p) {
+  const R = rng(i * 131 + 5);
+  let snow = '', lights = '', balls = '', top;
+  const bc = ['#E53935', '#FBC02D', '#1E88E5', '#E0E0E0', '#8E24AA'];
+  if (art.pf) {
+    const shown = art.pf.slice(0, Math.max(3, Math.ceil(art.pf.length * (.45 + .55 * p))));
+    shown.forEach(([x, y, rx, ry]) => { ry = ry || rx; snow += `<path d="M${F1(x - rx * .78)} ${F1(y - ry * .5)} Q${F1(x)} ${F1(y - ry * 1.18)} ${F1(x + rx * .78)} ${F1(y - ry * .5)} Q${F1(x + rx * .3)} ${F1(y - ry * .62)} ${F1(x)} ${F1(y - ry * .56)} Q${F1(x - rx * .3)} ${F1(y - ry * .64)} ${F1(x - rx * .78)} ${F1(y - ry * .5)}Z" fill="#fff" opacity=".95"/>`; });
+    top = Math.min(...shown.map(e => e[1] - (e[3] || e[2])));
+    const minX = Math.min(...shown.map(e => e[0] - e[2])), maxX = Math.max(...shown.map(e => e[0] + e[2]));
+    const cy = shown.reduce((a, e) => a + e[1], 0) / shown.length;
+    lights += xGarland(minX + 12, cy - 12, 100, cy + 16, maxX - 12, cy - 12, 9, i);
+    lights += xGarland(minX + 18, cy + 12, 100, cy + 38, maxX - 18, cy + 12, 8, i + 2);
+    for (let k = 0; k < 8; k++) {
+      const e = shown[(k * 3 + 1) % shown.length], ry = e[3] || e[2], ang = (R() * .9 + .05) * Math.PI, rad = .3 + R() * .45;
+      balls += xBauble(e[0] + e[2] * rad * Math.cos(ang), e[1] + ry * rad * Math.sin(ang), bc[k % bc.length], 4.2);
+    }
+  } else {
+    const k2 = art.cone, tp = k2.top + (1 - p) * 30;
+    top = tp;
+    [.32, .55, .78].forEach((t, j) => {
+      const y = tp + (k2.base - tp) * t, hw = (k2.w0 + (k2.w1 - k2.w0) * t) * .85;
+      lights += xGarland(100 - hw, y - 7, 100, y + 9, 100 + hw, y - 7, 6 + j * 2, i + j);
+      snow += `<path d="M${F1(100 - hw * .9)} ${F1(y - 3)} q${F1(hw * .45)} -5 ${F1(hw * .9)} -10 q${F1(hw * .45)} 5 ${F1(hw * .9)} 10" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round" opacity=".9"/>`;
+    });
+    for (let k = 0; k < 8; k++) { const t = .25 + k * .085, y = tp + (k2.base - tp) * t, hw = (k2.w0 + (k2.w1 - k2.w0) * t) * .6; balls += xBauble(100 + (R() * 2 - 1) * hw, y + 4, bc[k % bc.length], 3.8); }
+  }
+  return snow + lights + balls + xStar(100, Math.max(top - 3, 13), 10);   // 꼭대기 별 (잘리지 않게)
+}
+// 눈송이
+function snowHTML(n) {
+  const R = rng(2512); let s = '';
+  for (let k = 0; k < n; k++) {
+    const size = 3 + R() * 5;
+    s += `<span class="flake" style="left:${(R() * 100).toFixed(1)}%;width:${size.toFixed(1)}px;height:${size.toFixed(1)}px;animation-duration:${(5 + R() * 6).toFixed(1)}s;animation-delay:${(-R() * 10).toFixed(1)}s;opacity:${(.6 + R() * .4).toFixed(2)}"></span>`;
+  }
+  return s;
+}
+// 눈사람 (오리지널 그림)
+function snowmanSVG() {
+  return `<svg viewBox="0 0 80 100" class="w-full h-full">
+    <ellipse cx="40" cy="96" rx="30" ry="4" fill="#B0C4D8" opacity=".5"/>
+    <circle cx="40" cy="72" r="24" fill="#fff"/><circle cx="44" cy="76" r="22" fill="#DDE8F2" opacity=".6"/><circle cx="38" cy="70" r="22" fill="#fff"/>
+    <circle cx="40" cy="36" r="17" fill="#fff"/><circle cx="43" cy="39" r="15" fill="#DDE8F2" opacity=".6"/><circle cx="39" cy="35" r="15.5" fill="#fff"/>
+    <circle cx="34" cy="32" r="1.9" fill="#37474F"/><circle cx="45" cy="32" r="1.9" fill="#37474F"/>
+    <ellipse cx="31" cy="38" rx="3" ry="1.8" fill="#FFB3C7" opacity=".8"/><ellipse cx="48" cy="38" rx="3" ry="1.8" fill="#FFB3C7" opacity=".8"/>
+    <path d="M39.5 36 l11 2.5 l-11 1.6z" fill="#FF8A3D"/>
+    <path d="M35 42 q5 3 10 0" stroke="#37474F" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+    <path d="M24 48 q16 7 32 0 l0 5 q-16 7 -32 0z" fill="#E53935"/><path d="M48 52 l3 14 l6 -1 l-3 -13z" fill="#C62828"/>
+    <circle cx="40" cy="64" r="2" fill="#37474F"/><circle cx="40" cy="73" r="2" fill="#37474F"/><circle cx="40" cy="82" r="2" fill="#37474F"/>
+    <path d="M17 62 l-12 -10 M9 55 l-5 1 M10 56 l1 -6" stroke="#6D4C41" stroke-width="2" stroke-linecap="round"/>
+    <path d="M63 62 l12 -10 M71 55 l5 1 M70 56 l-1 -6" stroke="#6D4C41" stroke-width="2" stroke-linecap="round"/>
+    <rect x="27" y="17" width="26" height="4" rx="2" fill="#263238"/><rect x="31" y="4" width="18" height="15" rx="2" fill="#37474F"/><rect x="31" y="13" width="18" height="3.5" fill="#E53935"/>
+  </svg>`;
+}
+function xmasLayer(forForest) {
+  if (!isXmas()) return '';
+  return `<div class="absolute inset-0 pointer-events-none overflow-hidden">${snowHTML(forForest ? 34 : 26)}
+    <div class="absolute anim-float" style="${forForest ? 'right:3%;bottom:2%;width:58px;height:72px' : 'left:3%;bottom:3%;width:60px;height:75px'}">${snowmanSVG()}</div></div>`;
+}
+
+// 나무 그리기: days(0~30)로 크기, leaves(달성한 목표 수)만큼 잎이 하나씩 돋아요
+function treeSVG(spIdx, days, leaves, o = {}) {
+  const i = spIdx % SPECIES.length, sp = SPECIES[i];
+  const uid = i + '_' + (++TSEQ);   // [수정] 그림마다 고유 id (숨겨진 탭의 그라데이션을 참조해 색이 사라지는 문제 방지)
+  const p = Math.min(1, days / TREE_DAYS);
+  const xm = isXmas();
+  const ground = o.ground === false ? '' : xm ? `<ellipse cx="100" cy="183" rx="${(34 + 54 * p).toFixed(0)}" ry="${(6 + 4 * p).toFixed(1)}" fill="#fff"/><ellipse cx="96" cy="182" rx="${(20 + 30 * p).toFixed(0)}" ry="3" fill="#EAF2FA"/>` : `<ellipse cx="100" cy="183" rx="${(30 + 52 * p).toFixed(0)}" ry="${(5 + 4 * p).toFixed(1)}" fill="#7CB35B" opacity=".35"/>
+    <path d="M${70 - 20 * p} 183 l2 -6 l2 6 M${130 + 20 * p} 183 l2 -5 l2 5 M${85 - 30 * p} 184 l1.5 -4 l1.5 4" stroke="#6AA84F" stroke-width="1.4" fill="none" stroke-linecap="round"/>`;
+  const wrap = g => `<svg viewBox="${o.viewBox || '0 0 200 200'}" class="w-full h-full">${defs(uid, sp)}${ground}${g}</svg>`;
+  // 씨앗
+  if (days === 0 && leaves === 0) return wrap(`<path d="M78 183 q22 -18 44 0z" fill="#9C7A5C"/><path d="M84 180 q16 -12 32 0" stroke="#B89474" stroke-width="2" fill="none"/>
+    <ellipse cx="100" cy="171" rx="6" ry="4.5" fill="#7A5236"/><ellipse cx="98" cy="169.5" rx="2" ry="1.2" fill="#fff" opacity=".4"/>`);
+  // 새싹 (1~4일): 떡잎이 자라요
+  if (days <= 4) {
+    const h = 14 + days * 6, s = 7 + days * 1.6, c = sp.c;
+    return wrap(`<path d="M86 183 q14 -9 28 0z" fill="#9C7A5C"/>
+      <path d="M100 182 Q98 ${182 - h * .6} 100 ${182 - h}" stroke="#6DA544" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <path d="M100 ${182 - h} q${-s * 1.6} ${-s * .2} ${-s * 1.9} ${-s * 1.2} q${s * 1.2} ${-s * .6} ${s * 1.9} ${s * 1.2}z" fill="${c[1]}"/>
+      <path d="M100 ${182 - h} q${s * 1.6} ${-s * .2} ${s * 1.9} ${-s * 1.2} q${-s * 1.2} ${-s * .6} ${-s * 1.9} ${s * 1.2}z" fill="${c[0]}"/>
+      ${days >= 3 ? `<path d="M100 ${182 - h} q-2 ${-s} 1 ${-s * 1.6} q3 ${s * .7} -1 ${s * 1.6}z" fill="${c[1]}"/>` : ''}
+      ${[...Array(Math.min(leaves, 6))].map((_, k) => accent(sp.a, 100 + (k % 2 ? 1 : -1) * (6 + k * 2), 182 - h * (.35 + k * .08), 3, k % 2 ? 40 : -40, c[0])).join('')}`);
+  }
+  // 묘목 이후: 다 자란 모습을 작게 그렸다가 점점 키워요
+  const art = ART[i](uid, sp);
+  const sc = .4 + .6 * p;
+  let g = art.back;
+  if (art.pf) {
+    const n = Math.max(3, Math.ceil(art.pf.length * (.45 + .55 * p)));
+    g += puffs(uid, sp, art.pf.slice(0, n));
+  }
+  if (art.cone) { const k = art.cone; g += tiers(uid, sp, 100, k.top + (1 - p) * 30, k.base, Math.max(3, Math.round(k.n * (.55 + .45 * p))), k.w0, k.w1, k.droop); }
+  // 목표 달성 잎
+  const R = rng(i * 7919 + 101), n = Math.min(leaves, o.maxLeaves || 120);
+  const area = art.pf ? art.pf : null;
+  for (let k = 0; k < n; k++) {
+    const u = R(), v = R(), w = R(), r1 = R();
+    let x, y;
+    if (area) { const e = area[Math.floor(w * area.length)], ang = u * Math.PI * 2, rad = Math.sqrt(v) * .85; x = e[0] + e[2] * rad * Math.cos(ang); y = e[1] + (e[3] || e[2]) * rad * Math.sin(ang); }
+    else { const k2 = art.cone, top = k2.top + (1 - p) * 30, t = Math.sqrt(v); y = top + (k2.base - top) * t; x = 100 + (u * 2 - 1) * (k2.w0 + (k2.w1 - k2.w0) * t) * .8; }
+    g += accent(sp.a, x, y + 3, 3.6, r1 * 360, k % 3 ? sp.c[0] : sp.c[1]);
+  }
+  // [수정] 꽃·열매 장식은 삭제 (잎만 남김)
+  if (xm) g += xmasDeco(i, art, p);   // [추가] 12/25 크리스마스트리 장식
+  // 땅에 떨어진 잎 (가을 나무)
+  if (p >= .8 && art.drop) { const D = rng(i * 13 + 3); for (let k = 0; k < 5; k++) g += accent(sp.a === 'leaf' ? 'leaf' : sp.a, 60 + D() * 80, 180 + D() * 4, 2.6, D() * 360, art.drop); }
+  return wrap(`<g transform="translate(100 182) scale(${sc.toFixed(3)}) translate(-100 -182)">${g}</g>`);
 }
 
 // 집중 중: 잎 한 장이 자라는 모습
@@ -765,13 +1064,20 @@ function sproutSVG(p) {
 }
 
 /* ================= 숲 동물 친구 & 목마름 ================= */
+// [수정] 숲 친구 10종 (동물 6 · 새 4): t='s' 연속 달성일, t='a' 누적 달성일
 const ANIMALS = [
-  { n: 3, e: '🐿️', k: '다람쥐', pos: 'left:6%;bottom:4%;font-size:26px' },
-  { n: 7, e: '🐦', k: '참새', pos: 'right:20%;top:26%;font-size:20px' },
-  { n: 14, e: '🐇', k: '토끼', pos: 'right:4%;bottom:3%;font-size:26px' },
-  { n: 21, e: '🦌', k: '사슴', pos: 'left:-6%;bottom:16%;font-size:30px' },
-  { n: 30, e: '🦉', k: '부엉이', pos: 'left:24%;top:18%;font-size:22px' },
+  { t: 's', n: 3, e: '🐿️', k: '다람쥐', pos: 'left:2%;bottom:7%;font-size:24px' },
+  { t: 's', n: 7, e: '🐦', k: '참새', pos: 'right:18%;top:24%;font-size:18px' },
+  { t: 's', n: 14, e: '🐇', k: '토끼', pos: 'right:4%;bottom:3%;font-size:23px' },
+  { t: 's', n: 21, e: '🦌', k: '사슴', pos: 'left:-9%;bottom:16%;font-size:30px' },
+  { t: 's', n: 30, e: '🦉', k: '부엉이', pos: 'left:27%;top:22%;font-size:19px' },
+  { t: 'a', n: 10, e: '🦋', k: '나비', pos: 'left:6%;top:10%;font-size:17px' },
+  { t: 'a', n: 20, e: '🦔', k: '고슴도치', pos: 'left:24%;bottom:-1%;font-size:19px' },
+  { t: 'a', n: 40, e: '🦆', k: '오리', pos: 'right:-10%;bottom:-3%;font-size:21px' },
+  { t: 'a', n: 70, e: '🦊', k: '여우', pos: 'right:-9%;bottom:16%;font-size:25px' },
+  { t: 'a', n: 100, e: '🦅', k: '독수리', pos: 'right:-6%;top:-2%;font-size:23px' },
 ];
+const animalCond = a => `${a.t === 's' ? '연속' : '누적'} ${a.n}일`;
 function achSet() { return new Set(state.forest.allDays || []); }
 function achStreak() {
   const set = achSet(); let d = today();
@@ -794,11 +1100,17 @@ function daysSinceAch() {
 // 3일 동안 달성이 없으면 나무가 목말라요 (기록은 줄어들지 않음)
 function isThirsty() { const n = daysSinceAch(); return n != null && n >= 3; }
 function checkAnimals() {
-  const best = bestAchStreak(), fresh = [];
-  ANIMALS.forEach(a => { if (best >= a.n && !state.animals[a.k]) { state.animals[a.k] = today(); fresh.push(a); } });
+  const best = bestAchStreak(), tot = (state.forest.allDays || []).length, fresh = [];
+  ANIMALS.forEach(a => { if ((a.t === 's' ? best : tot) >= a.n && !state.animals[a.k]) { state.animals[a.k] = today(); fresh.push(a); } });
   return fresh;
 }
-function nextAnimal() { const st = achStreak(); return ANIMALS.find(a => !state.animals[a.k] && a.n > st) || null; }
+// 가장 가까운 다음 친구 (남은 일수 기준)
+function nextAnimal() {
+  const st = achStreak(), tot = (state.forest.allDays || []).length;
+  let best = null;
+  ANIMALS.forEach(a => { if (state.animals[a.k]) return; const rem = a.n - (a.t === 's' ? st : tot); if (rem > 0 && (!best || rem < best.rem)) best = Object.assign({ rem }, a); });
+  return best;
+}
 function renderAnimals() {
   const thirsty = isThirsty();
   document.getElementById('animals').innerHTML = thirsty ? '' :
@@ -846,7 +1158,8 @@ function renderWeekCard() {
 }
 function recommendSubjects(n = 1) {
   const ex = examInfo();
-  const pool = ex && ex.subs && ex.subs.length ? ex.subs : SUBJECTS.map(s => s.k);
+  const act = activeSubjects().map(s => s.k);
+  const pool = ex && ex.subs && ex.subs.filter(k => act.includes(k)).length ? ex.subs.filter(k => act.includes(k)) : act;
   const tot = subjectTotals(addDays(today(), -6), today());
   return pool.filter(k => SUB[k]).sort((a, b) => tot[a] - tot[b]).slice(0, n).map(k => ({ k, m: tot[k] }));
 }
@@ -875,7 +1188,7 @@ function renderExamCard() {
   if (!ex || state.active) { el.classList.add('hidden'); return; }
   el.classList.remove('hidden');
   const n = ddayDiff(ex.date), plan = examPlan();
-  const subs = ex.subs && ex.subs.length && ex.subs.length < 6 ? ex.subs.join('·') : '전 과목';
+  const subs = ex.subs && ex.subs.length && ex.subs.length < activeSubjects().length ? ex.subs.join('·') : '전 과목';
   el.innerHTML = `
     <div class="flex items-center justify-between">
       <div><p class="text-[11px] text-amber-700 font-sans">📝 시험기간 모드 · ${esc(subs)}</p><p class="text-lg text-gray-700">${esc(ex.name)}</p></div>
@@ -933,11 +1246,17 @@ function renderTree() {
   document.getElementById('level-sub').textContent = `${TREE_DAYS}일 중 ${d}일 달성${nxt ? ` · ${nxt.n}까지 ${nxt.d - d}일` : ''}${state.forest.trees.length ? ` · 숲에 ${state.forest.trees.length}그루` : ''}`;
   document.getElementById('exp-bar').style.width = `${Math.round(d / TREE_DAYS * 100)}%`;
   document.getElementById('tree').innerHTML = treeSVG(c.sp, d, c.leaves);
+  const sky = document.getElementById('sky-clouds'); if (!sky.firstChild) sky.innerHTML = cloudsHTML(false);
+  // [추가] 크리스마스: 눈·눈사람·겨울 하늘
+  const xm = isXmas();
+  document.getElementById('xmas-sky').innerHTML = xmasLayer(false);
+  document.getElementById('xmas-banner').classList.toggle('hidden', !xm || !!state.active);
+  document.getElementById('char-wrap').style.background = xm ? 'linear-gradient(#CFE3F5 0%, #EEF5FB 60%, rgba(255,255,255,0) 100%)' : 'linear-gradient(#E6F4FF 0%, rgba(255,255,255,0) 70%)';
   const st = achStreak(), na = nextAnimal(), ds = daysSinceAch();
   let extra = '';
   if (isThirsty()) extra = `💧 나무가 목말라요! 목표 하나만 달성하면 바로 싱싱해지고 친구들이 돌아와요`;
   else if (ds === 2) extra = `⚠️ 오늘 달성하지 않으면 내일 나무가 목말라져요`;
-  else extra = `🔥 연속 달성 ${st}일${na ? ` · 다음 친구 ${na.e} ${na.k}까지 ${na.n - st}일` : ' · 모든 친구가 모였어요!'}`;
+  else extra = `🔥 연속 달성 ${st}일${na ? ` · 다음 친구 ${na.e} ${na.k}까지 ${na.rem}일 (${animalCond(na)})` : ' · 친구 10종이 모두 모였어요!'}`;
   document.getElementById('level-sub').textContent += `\n${extra}`;
   document.getElementById('level-sub').style.whiteSpace = 'pre-line';
   renderAnimals();
@@ -946,13 +1265,19 @@ function renderTree() {
 function subjectChips(containerId, selected, onPick, small) {
   const c = document.getElementById(containerId);
   c.innerHTML = '';
-  SUBJECTS.forEach(s => {
+  activeSubjects().forEach(s => {
     const b = document.createElement('button');
-    b.className = `chip border-2 border-green-100 rounded-xl ${small ? 'py-1.5 text-xs' : 'py-2.5 text-sm'} bg-white text-gray-600 ${s.k === selected ? 'on' : ''}`;
+    b.className = `chip border-2 border-green-100 rounded-xl ${small ? 'py-1.5 text-xs' : 'py-2.5 text-sm'} bg-white text-gray-600 truncate px-1 ${s.k === selected ? 'on' : ''}`;
     b.textContent = `${s.e} ${s.k}`;
     b.onclick = () => onPick(s.k);
     c.appendChild(b);
   });
+  // [추가] 과목 직접 입력
+  const add = document.createElement('button');
+  add.className = `rounded-xl border-2 border-dashed border-green-300 text-green-700 ${small ? 'py-1.5 text-xs' : 'py-2.5 text-sm'} bg-white`;
+  add.textContent = '＋ 직접 입력';
+  add.onclick = () => openSubjects();
+  c.appendChild(add);
 }
 
 function goalForStart() {
@@ -962,6 +1287,7 @@ function goalForStart() {
 }
 
 function renderSetup() {
+  if (!activeSubjects().some(x => x.k === state.subject)) state.subject = activeSubjects()[0].k;
   subjectChips('subject-chips', state.subject, k => { state.subject = k; save(); renderSetup(); });
   document.querySelectorAll('#setup .seg button').forEach(b => {
     b.classList.toggle('on', b.dataset.mode === state.mode);
@@ -1038,7 +1364,7 @@ function renderDdayStrip() {
       <span>${t.e}</span><span class="font-sans text-xs">${esc(x.name)}</span><b>${ddayLabel(n)}</b></button>`;
   }).join('') + `<button onclick="openDday()" class="shrink-0 rounded-full px-3 py-1.5 text-xs border-2 border-dashed border-green-200 text-green-400">＋ D-Day</button>`;
 }
-let ddayType = 'final', ddaySubs = SUBJECTS.map(x => x.k);
+let ddayType = 'final', ddaySubs = null;
 function openDday() {
   if (state.active) return;
   renderDdayModal();
@@ -1059,7 +1385,8 @@ function renderDdayModal() {
   const isExam = EXAM_TYPES.includes(ddayType);
   document.getElementById('dday-subs-wrap').classList.toggle('hidden', !isExam);
   const sb = document.getElementById('dday-subs'); sb.innerHTML = '';
-  SUBJECTS.forEach(x => {
+  if (!ddaySubs) ddaySubs = activeSubjects().map(x => x.k);
+  activeSubjects().forEach(x => {
     const b = document.createElement('button');
     b.className = `chip border border-green-100 rounded-lg py-1 text-[11px] bg-white text-gray-600 ${ddaySubs.includes(x.k) ? 'on' : ''}`;
     b.textContent = `${x.e} ${x.k}`;
@@ -1073,7 +1400,7 @@ function renderDdayModal() {
     const n = ddayDiff(x.date), t = DT[x.type] || DT.etc;
     const row = document.createElement('div');
     row.className = `flex items-center gap-2 rounded-xl px-3 py-2 ${n < 0 ? 'bg-gray-50 text-gray-400' : 'bg-white border border-green-100'}`;
-    row.innerHTML = `<span>${t.e}</span><div class="flex-1 min-w-0"><p class="truncate">${esc(x.name)}</p><p class="text-[11px] text-gray-400">${x.date.replace(/-/g, '.')} (${dow(x.date)})${x.subs && x.subs.length && x.subs.length < 6 ? ' · ' + x.subs.join('·') : ''}</p></div><b class="font-jua ${n >= 0 && n <= 7 ? 'text-red-400' : 'text-green-600'}">${ddayLabel(n)}</b>`;
+    row.innerHTML = `<span>${t.e}</span><div class="flex-1 min-w-0"><p class="truncate">${esc(x.name)}</p><p class="text-[11px] text-gray-400">${x.date.replace(/-/g, '.')} (${dow(x.date)})${x.subs && x.subs.length && x.subs.length < activeSubjects().length ? ' · ' + x.subs.join('·') : ''}</p></div><b class="font-jua ${n >= 0 && n <= 7 ? 'text-red-400' : 'text-green-600'}">${ddayLabel(n)}</b>`;
     const del = document.createElement('button'); del.className = 'text-gray-300 px-1'; del.textContent = '✕';
     del.onclick = () => { state.ddays = state.ddays.filter(y => y.id !== x.id); save(); renderDdayModal(); renderAll(); };
     row.appendChild(del); box.appendChild(row);
@@ -1083,7 +1410,7 @@ function addDday() {
   const name = document.getElementById('dday-name').value.trim() || DT[ddayType].n;
   const date = document.getElementById('dday-date').value;
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) { toast('날짜를 골라주세요 📅'); return; }
-  state.ddays.push({ id: Date.now(), type: ddayType, name, date, subs: EXAM_TYPES.includes(ddayType) ? ddaySubs.slice() : [] });
+  state.ddays.push({ id: Date.now(), type: ddayType, name, date, subs: EXAM_TYPES.includes(ddayType) ? (ddaySubs || activeSubjects().map(x => x.k)).slice() : [] });
   document.getElementById('dday-name').value = ''; document.getElementById('dday-date').value = '';
   save(); renderDdayModal(); renderAll(); toast(`📅 ${name} ${ddayLabel(ddayDiff(date))} 추가!`);
 }
@@ -1138,7 +1465,7 @@ function showRunning() {
   else { gb.textContent = '포기하기 ㅠㅠ'; gb.className = 'w-full bg-gray-100 text-gray-500 text-lg py-3.5 rounded-2xl'; }
   document.getElementById('char-wrap').style.height = '7rem';
   const ch = document.getElementById('tree-box'); ch.style.width = ch.style.height = '7rem';
-  ['exam-card', 'install-banner'].forEach(id => document.getElementById(id).classList.add('hidden'));
+  ['exam-card', 'install-banner', 'xmas-banner'].forEach(id => document.getElementById(id).classList.add('hidden'));
   document.getElementById('run-label').textContent = `${SUB[a.sub].e} ${a.sub} ${a.sw ? '순공 측정 중 ⏱' : '집중 중 🔥'}`;
   const rs = document.getElementById('run-set');
   if (a.sw) { rs.textContent = `${SW_FLOWER}분을 넘기면 잎이 돋아요 🍃`; rs.classList.remove('hidden'); }
@@ -1203,7 +1530,7 @@ function logSession(a, min, ok, why, flower) {
 
 // 성공 공통 처리 → 모달에 띄울 추가 메시지 목록 반환
 function completeStudy(a, minutes, flower) {
-  let ev = null, wasThirsty = isThirsty(), newAnimals = [];
+  let ev = null, wasThirsty = isThirsty(), newAnimals = [], hadFriends = ANIMALS.some(x => state.animals[x.k]);
   if (flower) { state.totalSuccess++; ev = addLeaf(state.forest, today()); newAnimals = checkAnimals(); }
   addStudy(a.sub, minutes);
   logSession(a, minutes, true, '', flower);
@@ -1228,9 +1555,10 @@ function completeStudy(a, minutes, flower) {
     if (ev.done != null) extras.unshift(`<p class="text-green-800 bg-green-100 rounded-xl py-2.5">🎉 <b>${SPECIES[ev.done].n} 완성!</b> 나의 숲에 큰 나무가 심어졌어요 (총 ${f.trees.length}그루)<br><span class="text-xs">다음은 ${SPECIES[c.sp].n} 씨앗을 심어요 🌰</span></p>`);
     else if (ev.stageUp) extras.unshift(`<p class="text-green-700 bg-green-50 rounded-xl py-2">🌿 ${SPECIES[c.sp].n}가 '${ev.stageUp}'(으)로 자랐어요! (${c.days.length}/${TREE_DAYS}일)</p>`);
     else if (ev.newDay) extras.unshift(`<p class="text-green-700 bg-green-50 rounded-xl py-2">🌳 오늘 달성! ${SPECIES[c.sp].n}가 하루 더 자랐어요 (${c.days.length}/${TREE_DAYS}일)</p>`);
-    if (wasThirsty) extras.unshift(`<p class="text-sky-700 bg-sky-50 rounded-xl py-2">💧 나무가 물을 마시고 다시 싱싱해졌어요!${Object.keys(state.animals).length ? ' 숨었던 친구들도 돌아왔어요' : ''}</p>`);
-    newAnimals.forEach(a => extras.unshift(`<p class="text-amber-700 bg-amber-50 rounded-xl py-2.5"><span class="text-2xl">${a.e}</span> <b>${a.k}</b>가 숲에 놀러 왔어요! (${a.n}일 연속 달성)</p>`));
+    if (wasThirsty) extras.unshift(`<p class="text-sky-700 bg-sky-50 rounded-xl py-2">💧 나무가 물을 마시고 다시 싱싱해졌어요!${hadFriends ? ' 숨었던 친구들도 돌아왔어요' : ''}</p>`);
+    newAnimals.forEach(a => extras.unshift(`<p class="text-amber-700 bg-amber-50 rounded-xl py-2.5"><span class="text-2xl">${a.e}</span> <b>${a.k}</b>가 숲에 놀러 왔어요! (${animalCond(a)} 달성) · 숲 친구 ${ANIMALS.filter(x => state.animals[x.k]).length}/10</p>`));
   }
+  if (isXmas()) extras.unshift(`<p class="text-red-600 bg-red-50 rounded-xl py-2">🎄 크리스마스에도 공부한 너, 그게 최고의 선물이야! ⛄<br><span class="text-xs">- ${esc(state.settings.teacher)} -</span></p>`);
   checkBadges().forEach(b => extras.push(`<p class="text-amber-600 bg-amber-50 rounded-xl py-2">🏅 새 배지: ${b.icon} ${b.name}</p>`));
   save();
   renderAll();
@@ -1360,6 +1688,70 @@ function chime() {
   } catch (e) { }
 }
 
+/* ================= 과목 관리 (직접 입력·숨기기) ================= */
+let subjEmoji = '📘';
+function editableSubjects() { return SUBJECTS.map(x => ({ k: x.k, e: x.e, c: x.c, hidden: !!x.hidden })); }
+function openSubjects() {
+  if (state.active) { toast('집중 중에는 과목을 바꿀 수 없어요'); return; }
+  document.getElementById('subj-name').value = '';
+  renderSubjects();
+  openModal('subjects');
+}
+function renderSubjects() {
+  const eb = document.getElementById('subj-emojis'); eb.innerHTML = '';
+  SUBJ_EMOJIS.forEach(e => {
+    const b = document.createElement('button');
+    b.className = `rounded-lg py-1 text-lg ${e === subjEmoji ? 'bg-green-200 ring-2 ring-green-500' : 'bg-white'}`;
+    b.textContent = e; b.onclick = () => { subjEmoji = e; renderSubjects(); };
+    eb.appendChild(b);
+  });
+  const tot = subjectTotals('0000-00-00', '9999-12-31');
+  const box = document.getElementById('subj-list'); box.innerHTML = '';
+  const list = SUBJECTS.slice().sort((a, b) => (a.hidden ? 1 : 0) - (b.hidden ? 1 : 0));
+  list.forEach(x => {
+    const row = document.createElement('div');
+    row.className = `flex items-center gap-2 rounded-xl px-3 py-2 ${x.hidden ? 'bg-gray-50 text-gray-400' : 'bg-white border border-green-100'}`;
+    const dot = document.createElement('span'); dot.className = 'w-2.5 h-2.5 rounded-full shrink-0'; dot.style.background = x.c;
+    const nm = document.createElement('span'); nm.className = 'flex-1 truncate'; nm.textContent = `${x.e} ${x.k}`;
+    const t = document.createElement('span'); t.className = 'text-[11px] text-gray-400'; t.textContent = tot[x.k] ? fmtMin(tot[x.k]) : '';
+    const btn = document.createElement('button');
+    btn.className = `text-xs rounded-lg px-2.5 py-1 ${x.hidden ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`;
+    btn.textContent = x.hidden ? '다시 보이기' : '숨기기';
+    btn.onclick = () => toggleSubject(x.k);
+    row.append(dot, nm, t, btn); box.appendChild(row);
+  });
+}
+function addSubject() {
+  const inp = document.getElementById('subj-name');
+  const name = inp.value.replace(/[<>"'`\\]/g, '').replace(/\s+/g, ' ').trim().slice(0, 10);
+  if (!name) { toast('과목 이름을 써 주세요 ✏️'); inp.focus(); return; }
+  const list = editableSubjects();
+  const same = list.find(x => x.k === name);
+  if (same && !same.hidden) { toast('이미 있는 과목이에요'); return; }
+  if (same) same.hidden = false;
+  else {
+    const used = list.map(x => x.c);
+    list.push({ k: name, e: subjEmoji, c: SUBJ_PALETTE.find(c => !used.includes(c)) || SUBJ_PALETTE[list.length % SUBJ_PALETTE.length], hidden: false });
+  }
+  state.subjects = list;
+  autoInfo(name);
+  state.subject = name; todoSub = name;
+  save(); inp.value = ''; renderSubjects(); renderAll();
+  toast(`📚 ${name} 과목을 추가했어요`);
+}
+function toggleSubject(k) {
+  const list = editableSubjects(), x = list.find(y => y.k === k);
+  if (!x) return;
+  if (!x.hidden && list.filter(y => !y.hidden).length <= 1) { toast('과목이 하나는 있어야 해요'); return; }
+  x.hidden = !x.hidden;
+  state.subjects = list;
+  const act = list.filter(y => !y.hidden);
+  if (!act.some(y => y.k === state.subject)) state.subject = act[0].k;
+  if (!act.some(y => y.k === todoSub)) todoSub = act[0].k;
+  save(); renderSubjects(); renderAll();
+  toast(x.hidden ? `${k} 과목을 숨겼어요 (기록은 그대로)` : `${k} 과목이 다시 보여요`);
+}
+
 /* ================= 오늘 목표 ================= */
 let todoSub = '국어';
 function todayTodos() { const d = today(); state.todos[d] = state.todos[d] || []; return state.todos[d]; }
@@ -1388,6 +1780,7 @@ function carryOver() {
 }
 function renderTodos() {
   renderWeekCard();
+  if (!activeSubjects().some(x => x.k === todoSub)) todoSub = activeSubjects()[0].k;
   subjectChips('todo-subject-chips', todoSub, k => { todoSub = k; renderTodos(); }, true);
   const d = today();
   document.getElementById('todo-date').textContent = `${md(d)}`;
@@ -1513,14 +1906,14 @@ function renderStats() {
     tile('📅', '공부한 날', `${days}일`, `${from.slice(5).replace('-', '/')} ~ ${to.slice(5).replace('-', '/')}`);
 
   const max = Math.max(...Object.values(totals), 1);
-  const bars = SUBJECTS.slice().sort((a, b) => totals[b.k] - totals[a.k]);
+  const bars = SUBJECTS.filter(s => !s.hidden || totals[s.k]).sort((a, b) => totals[b.k] - totals[a.k]);
   document.getElementById('subject-bars').innerHTML = sum === 0
     ? '<p class="text-center text-gray-400 text-sm py-3">이 기간에는 아직 기록이 없어요!</p>'
     : bars.map((s, i) => `<div>
         <div class="flex justify-between text-sm mb-1"><span>${i === 0 && totals[s.k] ? '👑 ' : ''}${s.e} ${s.k}</span><span><b style="color:${s.c}">${fmtMin(totals[s.k])}</b> <span class="text-gray-400 text-xs">${Math.round(totals[s.k] / sum * 100)}%</span></span></div>
         <div class="w-full bg-gray-100 rounded-full h-3 overflow-hidden"><div class="h-3 rounded-full transition-all duration-700" style="width:${totals[s.k] / max * 100}%;background:${s.c}"></div></div>
       </div>`).join('') + (() => {
-        const zero = SUBJECTS.filter(s => !totals[s.k]).map(s => s.k);
+        const zero = activeSubjects().filter(s => !totals[s.k]).map(s => s.k);
         return zero.length ? `<p class="text-xs text-amber-600 bg-amber-50 rounded-lg px-2 py-1.5">💡 ${zero.join(', ')}은(는) 이 기간에 공부 기록이 없어요. 골고루 챙겨볼까?</p>` : '';
       })();
 
@@ -1536,7 +1929,7 @@ function renderStats() {
       <div class="w-full flex-1 flex flex-col-reverse rounded-lg overflow-hidden bg-green-50/50">${segs}</div>
       <span class="text-[10px] mt-1 ${d === t ? 'text-green-600' : 'text-gray-400'}">${d === t ? '오늘' : dow(d)}</span></div>`;
   }).join('');
-  document.getElementById('week-legend').innerHTML = SUBJECTS.map(s => `<span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-sm" style="background:${s.c}"></span>${s.k}</span>`).join('');
+  document.getElementById('week-legend').innerHTML = SUBJECTS.filter(s => !s.hidden || week.some(d => (state.daily[d] || {})[s.k])).map(s => `<span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-sm" style="background:${s.c}"></span>${s.k}</span>`).join('');
 
   renderForest();
 
@@ -1560,9 +1953,11 @@ function renderForest() {
   h += `<div class="${f.trees.length ? w : 'w-36 h-36'} -mx-1 -mb-4 relative" title="${sp.n} 키우는 중">${treeSVG(c.sp, c.days.length, c.leaves, { ground: false, viewBox: '10 10 180 180' })}<span class="absolute -top-1 left-1/2 -translate-x-1/2 whitespace-nowrap text-[9px] bg-white/90 text-green-700 rounded-full px-1.5 font-sans">자라는 중</span></div>`;
   if (!isThirsty()) h += ANIMALS.filter(a => state.animals[a.k]).map(a => `<span class="text-2xl -mb-3 mx-0.5 anim-float" title="${a.k}">${a.e}</span>`).join('');
   document.getElementById('forest-trees').innerHTML = h;
+  document.getElementById('forest-clouds').innerHTML = cloudsHTML(true);
+  document.getElementById('xmas-forest').innerHTML = xmasLayer(true);
   document.getElementById('animal-dex').innerHTML = ANIMALS.map(a => {
     const got = state.animals[a.k];
-    return `<div class="rounded-xl py-1.5 text-center border-2 ${got ? 'border-amber-200 bg-amber-50' : 'border-gray-100 bg-gray-50'}"><div class="text-2xl ${got ? '' : 'grayscale opacity-30'}">${a.e}</div><p class="text-[10px] ${got ? 'text-gray-700' : 'text-gray-400'}">${got ? a.k : '???'}</p><p class="text-[9px] text-gray-400 font-sans">${got ? (isThirsty() ? '숨었어요' : '함께해요') : `${a.n}일 연속`}</p></div>`;
+    return `<div class="rounded-xl py-1.5 text-center border-2 ${got ? 'border-amber-200 bg-amber-50' : 'border-gray-100 bg-gray-50'}"><div class="text-2xl ${got ? '' : 'grayscale opacity-30'}">${a.e}</div><p class="text-[10px] ${got ? 'text-gray-700' : 'text-gray-400'}">${got ? a.k : '???'}</p><p class="text-[9px] text-gray-400 font-sans">${got ? (isThirsty() ? '숨었어요' : '함께해요') : animalCond(a)}</p></div>`;
   }).join('');
   document.getElementById('forest-note').textContent = f.trees.length
     ? `지금 ${sp.n}를 키우는 중이에요 (${c.days.length}/${TREE_DAYS}일). 목표를 달성한 날이 30일 모이면 숲에 한 그루가 더 심어져요.`
@@ -1610,7 +2005,7 @@ function buildReport(p) {
   L.push('=== 📊 과목별 공부시간 ===');
   if (!sum) L.push('기록 없음');
   SUBJECTS.slice().sort((a, b) => totals[b.k] - totals[a.k]).forEach(s => { if (totals[s.k]) L.push(`- ${s.k}: ${fmtMin(totals[s.k])} (${Math.round(totals[s.k] / sum * 100)}%)`); });
-  const zero = SUBJECTS.filter(s => !totals[s.k]).map(s => s.k);
+  const zero = activeSubjects().filter(s => !totals[s.k]).map(s => s.k);
   if (sum && zero.length) L.push(`- 기록 없는 과목: ${zero.join(', ')}`);
   if (p !== 'today') {
     L.push('');
@@ -1641,7 +2036,7 @@ function buildReport(p) {
   if (dd.length) { L.push(''); L.push('=== 📅 다가오는 시험 ==='); dd.forEach(x => L.push(`${(DT[x.type] || DT.etc).e} ${x.name} ${ddayLabel(ddayDiff(x.date))} (${md(x.date)})`)); }
   L.push('');
   L.push('=== 🌱 과목별 자동 성장 목표 ===');
-  L.push(SUBJECTS.map(s => { const a = autoInfo(s.k); return `${s.k} ${a.goal}분${a.next ? `→${a.next}분` : ''}`; }).join(' · '));
+  L.push(activeSubjects().map(s => { const a = autoInfo(s.k); return `${s.k} ${a.goal}분${a.next ? `→${a.next}분` : ''}`; }).join(' · '));
   return L.join('\n');
 }
 let dlApi = null;
@@ -1841,7 +2236,7 @@ function renderTeacher() {
       <p class="text-xs text-gray-500 font-sans mt-3">${isThirsty() ? `💧 목마름(${daysSinceAch()}일째 쉼) · ` : ''}🌳 ${SPECIES[state.forest.cur.sp].n} ${state.forest.cur.days.length}/${TREE_DAYS}일 · 숲 ${state.forest.trees.length}그루 ${ANIMALS.filter(a => state.animals[a.k]).map(a => a.e).join('')} · 주간 ${Math.round(weekTotal(weekStart()) / weekGoal() * 100)}% · 오늘 목표 ${td.filter(x => x.done).length}/${td.length}${up ? ` · ${esc(up.name)} ${ddayLabel(ddayDiff(up.date))}` : ''}</p>
     </div>`;
     const max = Math.max(...Object.values(wk), 1);
-    h += `<div class="card p-4"><h3 class="text-green-600 mb-2">📊 최근 7일 과목별</h3><div class="flex flex-col gap-2 font-sans text-xs">${SUBJECTS.map(x => `<div class="flex items-center gap-2"><span class="w-14">${x.k}</span><div class="flex-1 bg-gray-100 rounded-full h-2.5 overflow-hidden"><div class="h-2.5 rounded-full" style="width:${wk[x.k] / max * 100}%;background:${x.c}"></div></div><span class="w-14 text-right">${wk[x.k] ? fmtMin(wk[x.k]) : '-'}</span></div>`).join('')}</div></div>`;
+    h += `<div class="card p-4"><h3 class="text-green-600 mb-2">📊 최근 7일 과목별</h3><div class="flex flex-col gap-2 font-sans text-xs">${SUBJECTS.filter(x => !x.hidden || wk[x.k]).map(x => `<div class="flex items-center gap-2"><span class="w-14 truncate">${x.k}</span><div class="flex-1 bg-gray-100 rounded-full h-2.5 overflow-hidden"><div class="h-2.5 rounded-full" style="width:${wk[x.k] / max * 100}%;background:${x.c}"></div></div><span class="w-14 text-right">${wk[x.k] ? fmtMin(wk[x.k]) : '-'}</span></div>`).join('')}</div></div>`;
     h += `<div class="card p-4"><h3 class="text-green-600 mb-1">💮 날짜별 기록 & 도장</h3><p class="text-[11px] text-gray-400 font-sans mb-3">도장을 누르면 학생 달력에 바로 표시돼요. 한 번 더 누르면 취소돼요.</p><div class="flex flex-col gap-2">`;
     for (let i = 0; i < 14; i++) {
       const d = addDays(t, -i), tot = dayTotal(d), o = state.daily[d] || {}, tds = state.todos[d] || [];
