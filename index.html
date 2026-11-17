@@ -1,0 +1,1905 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>예현이의 숲</title>
+<!-- [추가] 설치형 앱(PWA) 설정: GitHub Pages에서 홈 화면 앱으로 설치 -->
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#2E9E4F">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="예현이의 숲">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+if (window.tailwind) tailwind.config = { theme: { extend: { fontFamily: { sans: ['"Gowun Dodum"', 'system-ui', 'sans-serif'], jua: ['Jua', 'sans-serif'] } } } };
+</script>
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Gowun+Dodum&display=swap" rel="stylesheet">
+<style>
+  body { font-family: 'Jua', sans-serif; background: radial-gradient(circle at 20% 0%, #DDF2D3 0, #F1FAEC 45%, #EAF6F1 100%); -webkit-tap-highlight-color: transparent; }
+  @keyframes bounce { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
+  @keyframes float { 0%,100% { transform: translateY(0) rotate(0); } 50% { transform: translateY(-8px) rotate(2deg); } }
+  @keyframes shake { 0%,100% { transform: translateX(0); } 20%,60% { transform: translateX(-6px); } 40%,80% { transform: translateX(6px); } }
+  @keyframes cry { 0%,100% { transform: scale(1); } 50% { transform: scale(.95); } }
+  @keyframes pop { 0% { transform: scale(.6); opacity: 0; } 70% { transform: scale(1.08); opacity: 1; } 100% { transform: scale(1); } }
+  @keyframes sway { 0%,100% { transform: rotate(-3deg); } 50% { transform: rotate(3deg); } }
+  @keyframes toastIn { from { transform: translate(-50%, -12px); opacity: 0; } to { transform: translate(-50%, 0); opacity: 1; } }
+  .anim-bounce { animation: bounce 2s infinite ease-in-out; }
+  .anim-float { animation: float 3s infinite ease-in-out; }
+  .anim-shake { animation: shake .5s ease-in-out; }
+  .anim-cry { animation: cry 1.5s infinite ease-in-out; }
+  .anim-pop { animation: pop .45s ease-out both; }
+  .anim-sway { animation: sway 3s infinite ease-in-out; transform-origin: 50% 90%; }
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-thumb { background: #A5D6A7; border-radius: 10px; }
+  .glass { background: rgba(255,255,255,.92); backdrop-filter: blur(10px); }
+  .card { background: #fff; border: 2px solid #DCEFD3; border-radius: 1.25rem; box-shadow: 0 2px 8px rgba(46,125,50,.07); }
+  .chip { transition: all .15s; }
+  .chip.on { background: #2E9E4F; color: #fff; border-color: #2E9E4F; box-shadow: 0 4px 10px rgba(46,158,79,.3); }
+  .seg button.on { background: #fff; color: #15803D; box-shadow: 0 2px 6px rgba(0,0,0,.08); }
+  .cal-day { aspect-ratio: 1 / 1.05; }
+  .modal { max-height: 88%; }
+  #toast { animation: toastIn .25s ease-out; }
+  input[type=number]::-webkit-inner-spin-button { opacity: 0; }
+  .thirsty { filter: saturate(.25) sepia(.55) brightness(1.02); transform: rotate(-1.5deg); }
+  .tab-btn.on { color: #15803D; transform: scale(1.08); }
+</style>
+</head>
+<body class="text-gray-700 min-h-screen flex items-center justify-center sm:p-4">
+
+<div id="app" class="w-full max-w-md h-[100dvh] sm:h-[860px] sm:max-h-[95vh] glass sm:rounded-[2.5rem] shadow-2xl flex flex-col relative overflow-hidden sm:border-2 border-green-100">
+
+  <!-- 헤더 -->
+  <header class="flex justify-between items-center gap-2 px-4 pt-5 pb-3 border-b border-green-100 relative z-10" style="padding-top:max(1.25rem, env(safe-area-inset-top))">
+    <div class="min-w-0 flex-1">
+      <!-- [수정] 제목이 두 줄로 꺾이지 않게 한 줄 고정 -->
+      <h1 class="text-[22px] leading-tight text-green-700 whitespace-nowrap">🌳 예현이의 숲</h1>
+      <p id="header-sub" class="text-xs text-gray-400 font-sans mt-0.5 truncate">오늘도 숲을 키워볼까? 🌱</p>
+    </div>
+    <div class="flex items-center gap-2 shrink-0">
+      <span id="sync-badge" title="이 기기에 저장 중" class="w-9 h-9 rounded-full bg-gray-50 flex items-center justify-center text-base">📱</span>
+      <button onclick="openExport()" title="선생님께 보내기" class="w-9 h-9 bg-white rounded-full shadow-md flex items-center justify-center text-base hover:bg-green-50">📋</button>
+      <button onclick="openSettings()" title="설정" class="w-9 h-9 bg-white rounded-full shadow-md flex items-center justify-center text-base hover:bg-green-50">⚙️</button>
+    </div>
+  </header>
+
+  <main id="main" class="flex-1 overflow-y-auto pb-24 relative z-0">
+
+    <!-- ===== 타이머 탭 ===== -->
+    <section id="view-timer" class="flex flex-col p-5 pt-3 gap-3 min-h-full">
+      <div id="dday-strip" class="flex gap-2 overflow-x-auto -mx-1 px-1 pb-1 shrink-0"></div>
+      <div id="install-banner" class="hidden flex items-center gap-2 bg-white border-2 border-green-100 rounded-2xl px-3 py-2 text-xs font-sans">
+        <span class="text-lg">📲</span><span class="flex-1">홈 화면에 추가하면 앱처럼 바로 열 수 있어요</span>
+        <button onclick="openInstall()" class="bg-green-600 text-white rounded-lg px-2.5 py-1">방법 보기</button>
+        <button onclick="hideInstallBanner()" class="text-gray-300 px-1">✕</button>
+      </div>
+      <div id="exam-card" class="hidden rounded-2xl p-3.5 border-2 border-amber-200 bg-gradient-to-br from-amber-50 to-yellow-50"></div>
+      <div id="char-wrap" class="w-full h-52 flex items-center justify-center transition-all duration-500">
+        <div id="tree-box" class="relative w-52 h-52 transition-all duration-500">
+          <div id="tree" class="w-full h-full drop-shadow-sm transition-all duration-700"></div>
+          <div id="animals" class="absolute inset-0 pointer-events-none"></div>
+          <div id="thirst-bubble" class="hidden absolute -top-1 left-1/2 -translate-x-1/2 whitespace-nowrap bg-sky-50 border-2 border-sky-200 text-sky-600 text-[11px] font-sans rounded-full px-2.5 py-1"></div>
+        </div>
+      </div>
+
+      <div id="level-card" class="card p-3.5">
+        <div class="flex justify-between items-end mb-2">
+          <span class="text-green-600" id="level-name">Lv.1</span>
+          <span class="text-xs text-gray-400 font-sans" id="level-next"></span>
+        </div>
+        <div class="w-full bg-green-50 rounded-full h-3 overflow-hidden">
+          <div id="exp-bar" class="bg-gradient-to-r from-lime-400 to-green-600 h-3 rounded-full transition-all duration-700" style="width:0%"></div>
+        </div>
+        <p id="level-sub" class="text-[11px] text-gray-500 font-sans mt-1.5"></p>
+      </div>
+
+      <!-- 설정 영역 -->
+      <div id="setup" class="flex flex-col gap-3">
+        <div class="card p-3.5">
+          <p class="text-gray-500 text-sm mb-2">어떤 과목을 공부할까?</p>
+          <div id="subject-chips" class="grid grid-cols-3 gap-2"></div>
+          <div id="rec-box" class="mt-2"></div>
+        </div>
+        <div class="card p-3.5">
+          <div class="seg grid grid-cols-4 bg-green-50 rounded-xl p-1 mb-3 text-xs">
+            <button data-mode="auto" class="py-2 rounded-lg text-gray-500">🌱 자동성장</button>
+            <button data-mode="free" class="py-2 rounded-lg text-gray-500">✏️ 자유설정</button>
+            <button data-mode="cycle" class="py-2 rounded-lg text-gray-500">🔁 사이클</button>
+            <button data-mode="sw" class="py-2 rounded-lg text-gray-500">⏱ 스톱워치</button>
+          </div>
+          <div id="mode-panel"></div>
+        </div>
+      </div>
+
+      <!-- 집중 중 -->
+      <div id="running" class="hidden flex-col items-center flex-1">
+        <p id="run-label" class="text-lg text-gray-600">국어 집중 중 🔥</p>
+        <p id="run-set" class="text-xs text-green-400 font-sans mt-1 hidden"></p>
+        <div class="relative w-64 h-64 flex items-center justify-center mt-2">
+          <svg class="w-full h-full -rotate-90 absolute" viewBox="0 0 100 100">
+            <circle cx="50" cy="50" r="45" fill="none" stroke="#E1F3D9" stroke-width="5"/>
+            <circle id="ring" cx="50" cy="50" r="45" fill="none" stroke="#2E9E4F" stroke-width="5" stroke-dasharray="282.7" stroke-dashoffset="0" stroke-linecap="round" style="transition: stroke-dashoffset .3s linear"/>
+          </svg>
+          <div class="flex flex-col items-center relative">
+            <div id="plant" class="w-24 h-24 anim-sway"></div>
+            <span id="time-left" class="text-4xl text-green-600 font-bold tracking-widest" style="font-family: ui-rounded, system-ui, sans-serif">30:00</span>
+          </div>
+        </div>
+        <p id="run-warn" class="text-red-400 mt-3 text-xs bg-red-50 py-2 px-4 rounded-full text-center">🚨 강력 모드: 화면을 벗어나면 잎이 떨어져요</p>
+      </div>
+
+      <!-- 쉬는 시간 -->
+      <div id="resting" class="hidden flex-col items-center flex-1 text-center">
+        <div class="text-6xl mt-4">☕</div>
+        <p class="text-xl text-sky-500 mt-2">쉬는 시간</p>
+        <p class="text-xs text-gray-400 font-sans mt-1">물 마시고 스트레칭! 쉬는 동안은 폰을 봐도 괜찮아요</p>
+        <p id="rest-left" class="text-5xl text-sky-500 font-bold mt-4" style="font-family: ui-rounded, system-ui, sans-serif">05:00</p>
+        <p id="rest-next" class="text-sm text-gray-500 font-sans mt-3"></p>
+      </div>
+
+      <div class="mt-auto pt-2 w-full">
+        <button id="start-btn" onclick="startSession()" class="w-full bg-gradient-to-r from-green-400 to-green-500 text-white text-xl py-4 rounded-2xl shadow-lg shadow-green-200 active:scale-[.98] transition">🚀 집중 시작하기</button>
+        <button id="giveup-btn" onclick="askGiveUp()" class="hidden w-full bg-gray-100 text-gray-500 text-lg py-3.5 rounded-2xl">포기하기 ㅠㅠ</button>
+        <button id="skip-rest-btn" onclick="endRest(true)" class="hidden w-full bg-sky-400 text-white text-lg py-3.5 rounded-2xl shadow-md">휴식 끝내고 바로 시작 ▶</button>
+      </div>
+    </section>
+
+    <!-- ===== 오늘 목표 탭 ===== -->
+    <section id="view-todo" class="hidden flex-col p-5 pt-3 gap-3">
+      <div id="week-card" class="card p-4"></div>
+      <div class="card p-4">
+        <div class="flex justify-between items-center mb-2">
+          <h2 class="text-xl text-green-600">✅ 오늘의 목표</h2>
+          <span id="todo-date" class="text-xs text-gray-400 font-sans"></span>
+        </div>
+        <div class="flex items-center gap-3">
+          <div class="flex-1 bg-green-50 rounded-full h-3 overflow-hidden"><div id="todo-bar" class="h-3 bg-gradient-to-r from-emerald-300 to-emerald-500 rounded-full transition-all" style="width:0%"></div></div>
+          <span id="todo-rate" class="text-sm text-emerald-500">0%</span>
+        </div>
+      </div>
+
+      <div class="card p-4 flex flex-col gap-2">
+        <p class="text-sm text-gray-500">목표 추가하기</p>
+        <div id="todo-subject-chips" class="grid grid-cols-3 gap-1.5"></div>
+        <input id="todo-task" type="text" maxlength="60" placeholder="학습량 예: 수능완성 3강 풀기" class="p-2.5 rounded-xl bg-gray-50 border border-gray-200 outline-none text-sm font-sans focus:border-green-300">
+        <div class="flex gap-2 items-center">
+          <span class="text-xs text-gray-500 font-sans">목표 시간</span>
+          <input id="todo-min" type="number" min="0" max="600" value="30" class="w-20 p-2 rounded-xl bg-gray-50 border border-gray-200 outline-none text-sm text-center font-sans">
+          <span class="text-xs text-gray-400 font-sans">분 (0 = 시간 없음)</span>
+          <button onclick="addTodo()" class="ml-auto bg-green-400 text-white px-4 py-2 rounded-xl text-sm hover:bg-green-500">추가</button>
+        </div>
+        <p class="text-[11px] text-gray-400 font-sans">💡 타이머로 그 과목을 목표 시간만큼 채우면 자동으로 체크돼요!</p>
+      </div>
+
+      <button id="carry-btn" onclick="carryOver()" class="hidden text-sm font-sans text-green-600 bg-green-50 rounded-xl py-2.5">↪ 어제 못 끝낸 목표 가져오기</button>
+      <ul id="todo-list" class="flex flex-col gap-2 font-sans"></ul>
+    </section>
+
+    <!-- ===== 달력 탭 ===== -->
+    <section id="view-cal" class="hidden flex-col p-5 pt-3 gap-3">
+      <div class="card p-4">
+        <div class="flex justify-between items-center mb-3">
+          <button onclick="moveMonth(-1)" class="w-8 h-8 rounded-full bg-green-50 text-green-600">◀</button>
+          <span class="text-lg text-gray-700" id="cal-title"></span>
+          <button onclick="moveMonth(1)" class="w-8 h-8 rounded-full bg-green-50 text-green-600">▶</button>
+        </div>
+        <div class="grid grid-cols-7 gap-1 text-center text-xs text-gray-400 mb-1">
+          <div class="text-red-300">일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div class="text-sky-300">토</div>
+        </div>
+        <div id="cal-grid" class="grid grid-cols-7 gap-1"></div>
+        <div class="flex items-center justify-end gap-1 mt-3 text-[10px] text-gray-400 font-sans">
+          <span>적음</span>
+          <span class="w-3 h-3 rounded bg-green-100"></span><span class="w-3 h-3 rounded bg-green-200"></span><span class="w-3 h-3 rounded bg-green-300"></span><span class="w-3 h-3 rounded bg-green-400"></span>
+          <span>많음</span>
+        </div>
+        <p id="cal-month-sum" class="text-xs text-gray-500 font-sans mt-2"></p>
+      </div>
+      <div id="day-detail" class="card p-4"></div>
+    </section>
+
+    <!-- ===== 통계 탭 ===== -->
+    <section id="view-stats" class="hidden flex-col p-5 pt-3 gap-3">
+      <div class="card p-4">
+        <div class="flex justify-between items-center mb-2"><h3 class="text-green-700 text-lg">🌲 나의 숲</h3><span id="forest-count" class="text-xs text-gray-500 font-sans"></span></div>
+        <div class="rounded-2xl overflow-hidden" style="background:linear-gradient(#EAF6FF 0%, #EFF9E8 45%, #CDEBB4 80%, #B5DE97 100%)">
+          <div id="forest-trees" class="flex flex-wrap justify-center items-end px-3 pt-4 pb-6 min-h-[160px]"></div>
+        </div>
+        <p id="forest-note" class="text-[11px] text-gray-500 font-sans mt-2"></p>
+        <p class="text-sm text-gray-600 mt-4 mb-2">🐾 숲 친구 <span class="text-[11px] text-gray-400 font-sans">(연속 달성일마다 찾아와요)</span></p>
+        <div id="animal-dex" class="grid grid-cols-5 gap-1.5"></div>
+        <p class="text-sm text-gray-600 mt-4 mb-2">📖 나무 도감 <span class="text-[11px] text-gray-400 font-sans">(30일마다 1그루씩, 10종)</span></p>
+        <div id="dex" class="grid grid-cols-5 gap-1.5"></div>
+      </div>
+      <div class="seg flex bg-green-50 rounded-xl p-1 text-sm" id="period-seg">
+        <button data-p="week" class="flex-1 py-2 rounded-lg text-gray-500">최근 7일</button>
+        <button data-p="month" class="flex-1 py-2 rounded-lg text-gray-500">이번 달</button>
+        <button data-p="all" class="flex-1 py-2 rounded-lg text-gray-500">전체</button>
+      </div>
+      <div id="stat-tiles" class="grid grid-cols-2 gap-2"></div>
+      <div class="card p-4">
+        <h3 class="text-green-600 mb-3">📊 과목별 공부시간 비교</h3>
+        <div id="subject-bars" class="flex flex-col gap-3 font-sans"></div>
+      </div>
+      <div class="card p-4">
+        <h3 class="text-green-600 mb-3">📈 최근 7일 공부 흐름</h3>
+        <div id="week-chart" class="flex items-end gap-2 h-40"></div>
+        <div id="week-legend" class="flex flex-wrap gap-x-3 gap-y-1 mt-3 text-[11px] font-sans text-gray-500"></div>
+      </div>
+      <div class="card p-4">
+        <h3 class="text-green-600 mb-3">🏅 도전 배지</h3>
+        <div id="badges" class="grid grid-cols-3 gap-2"></div>
+      </div>
+    </section>
+
+    <!-- ===== 선생님 탭 (페이지 주인에게만 보임) ===== -->
+    <section id="view-teacher" class="hidden flex-col p-5 pt-3 gap-3">
+      <div class="card p-4">
+        <h2 class="text-xl text-green-600">👩‍🏫 선생님 모드</h2>
+        <p class="text-xs text-gray-400 font-sans mt-1">학생이 공부하면 기록이 여기로 자동으로 들어와요. 날짜마다 도장을 찍어주면 학생 달력에 바로 보여요.</p>
+        <div id="t-students" class="flex flex-wrap gap-2 mt-3"></div>
+      </div>
+      <div id="t-body" class="flex flex-col gap-3"></div>
+    </section>
+  </main>
+
+  <!-- 하단 탭 -->
+  <nav class="absolute bottom-0 w-full bg-white/95 border-t border-green-100 flex px-2 pt-2 pb-4 z-20" style="padding-bottom:max(1rem, env(safe-area-inset-bottom))">
+    <button onclick="switchTab('timer')" data-tab="timer" class="tab-btn flex-1 flex flex-col items-center text-gray-400 transition"><span class="text-2xl">⏳</span><span class="text-[11px] mt-0.5">타이머</span></button>
+    <button onclick="switchTab('todo')" data-tab="todo" class="tab-btn flex-1 flex flex-col items-center text-gray-400 transition"><span class="text-2xl">✅</span><span class="text-[11px] mt-0.5">오늘목표</span></button>
+    <button onclick="switchTab('cal')" data-tab="cal" class="tab-btn flex-1 flex flex-col items-center text-gray-400 transition"><span class="text-2xl">📅</span><span class="text-[11px] mt-0.5">달력</span></button>
+    <button onclick="switchTab('stats')" data-tab="stats" class="tab-btn flex-1 flex flex-col items-center text-gray-400 transition"><span class="text-2xl">📊</span><span class="text-[11px] mt-0.5">숲·통계</span></button>
+    <button onclick="switchTab('teacher')" data-tab="teacher" id="tab-teacher" class="tab-btn hidden flex-1 flex-col items-center text-gray-400 transition"><span class="text-2xl">👩‍🏫</span><span class="text-[11px] mt-0.5">선생님</span></button>
+  </nav>
+
+  <!-- 토스트 -->
+  <div id="toast-wrap" class="absolute top-20 left-1/2 z-[60] pointer-events-none"></div>
+
+  <!-- 모달 -->
+  <div id="overlay" class="absolute inset-0 bg-black/40 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+
+    <div id="m-success" class="modal hidden bg-white w-full max-w-sm rounded-[2rem] p-7 flex-col items-center text-center shadow-2xl overflow-y-auto">
+      <div id="s-flower" class="text-7xl mb-2 anim-pop">🌷</div>
+      <h2 id="s-title" class="text-3xl text-green-600">목표 달성!</h2>
+      <p id="s-sub" class="text-sm text-gray-500 font-sans mt-1"></p>
+      <div class="bg-green-50 rounded-2xl p-4 my-4 w-full">
+        <p id="s-msg" class="text-gray-700 font-sans font-bold leading-relaxed whitespace-pre-wrap"></p>
+      </div>
+      <div id="s-extra" class="flex flex-col gap-1.5 w-full mb-4 text-sm"></div>
+      <div id="s-btns" class="flex flex-col gap-2 w-full"></div>
+    </div>
+
+    <div id="m-fail" class="modal hidden bg-white w-full max-w-sm rounded-[2rem] p-7 flex-col items-center text-center shadow-2xl border-4 border-red-100">
+      <div class="text-6xl mb-3 anim-shake">🍂</div>
+      <h2 class="text-2xl text-red-400 mb-1">앗, 집중이 깨졌어요!</h2>
+      <p id="f-reason" class="text-sm text-gray-400 font-sans mb-2"></p>
+      <p class="text-gray-600 mb-6 font-sans text-sm leading-relaxed">잎 하나가 떨어졌지만 괜찮아.<br>나무는 내일도 자랄 수 있어. 숨 한 번 고르고 다시 해보자!</p>
+      <button onclick="closeModal()" class="w-full bg-green-500 text-white py-3 rounded-xl text-lg">다시 도전하기 💪</button>
+    </div>
+
+    <div id="m-confirm" class="modal hidden bg-white w-full max-w-sm rounded-[2rem] p-7 flex-col items-center text-center shadow-2xl">
+      <div id="c-icon" class="text-5xl mb-3">😢</div>
+      <h2 id="c-title" class="text-2xl text-gray-700 mb-2"></h2>
+      <p id="c-msg" class="text-gray-500 mb-6 font-sans text-sm"></p>
+      <div class="flex gap-2 w-full">
+        <button id="c-cancel" class="flex-1 bg-green-500 text-white py-3 rounded-xl text-lg">취소</button>
+        <button id="c-ok" class="flex-1 bg-gray-200 text-gray-600 py-3 rounded-xl text-lg">확인</button>
+      </div>
+    </div>
+
+    <div id="m-export" class="modal hidden bg-white w-full max-w-sm rounded-[2rem] p-6 flex-col shadow-2xl">
+      <div class="flex justify-between items-center mb-3">
+        <h2 class="text-2xl text-green-600">📋 학습 리포트</h2>
+        <button onclick="closeModal()" class="text-gray-400 text-3xl leading-none">&times;</button>
+      </div>
+      <div class="seg flex bg-green-50 rounded-xl p-1 text-xs mb-3" id="export-seg">
+        <button data-p="today" class="flex-1 py-2 rounded-lg text-gray-500">오늘</button>
+        <button data-p="week" class="flex-1 py-2 rounded-lg text-gray-500">최근 7일</button>
+        <button data-p="month" class="flex-1 py-2 rounded-lg text-gray-500">이번 달</button>
+        <button data-p="all" class="flex-1 py-2 rounded-lg text-gray-500">전체</button>
+      </div>
+      <p id="export-hint" class="text-xs text-gray-500 font-sans mb-2"></p>
+      <textarea id="export-text" readonly class="w-full flex-1 min-h-[220px] bg-gray-50 border border-gray-200 rounded-xl p-3 text-xs font-sans text-gray-700 resize-none outline-none mb-3"></textarea>
+      <div class="flex gap-2">
+        <button id="copy-btn" onclick="copyExport()" class="flex-1 bg-green-500 text-white py-3 rounded-xl text-lg shadow-md">복사하기</button>
+        <button id="dl-btn" onclick="downloadExport()" class="hidden flex-1 bg-white border-2 border-green-200 text-green-600 py-3 rounded-xl text-lg">파일 저장</button>
+      </div>
+    </div>
+
+    <div id="m-install" class="modal hidden bg-white w-full max-w-sm rounded-[2rem] p-6 flex-col shadow-2xl overflow-y-auto">
+      <div class="flex justify-between items-center mb-3">
+        <h2 class="text-2xl text-green-700">📲 홈 화면에 추가</h2>
+        <button onclick="closeModal()" class="text-gray-400 text-3xl leading-none">&times;</button>
+      </div>
+      <div class="flex flex-col gap-3 font-sans text-sm text-gray-600">
+        <button id="install-now" onclick="installNow()" class="hidden w-full bg-green-600 text-white py-3 rounded-xl text-lg font-jua shadow-md">⬇️ 지금 앱으로 설치하기</button>
+        <p id="install-app-link" class="hidden text-xs bg-lime-50 border border-lime-200 rounded-xl p-2.5">설치용 주소: <b class="select-all">https://moongzzik.github.io/yehyun-forest/</b><br>이 주소를 크롬·사파리에서 열어야 '앱 설치'가 돼요.</p>
+        <p class="text-xs bg-amber-50 border border-amber-200 rounded-xl p-2.5">⚠️ 카카오톡 안에서 열었다면 먼저 오른쪽 위 ⋮ / ⋯ → <b>다른 브라우저로 열기</b>를 눌러 주세요. 카카오톡 안에서는 설치가 안 돼요.</p>
+        <div class="bg-gray-50 rounded-2xl p-3">
+          <p class="font-jua text-base text-gray-800 mb-1"> 아이폰 (Safari)</p>
+          <ol class="list-decimal pl-5 space-y-1">
+            <li>이 페이지를 <b>Safari</b>로 열어요 (Claude 앱 안이라면 공유 → 'Safari로 열기')</li>
+            <li>화면 아래 가운데 <b>공유 버튼 (□↑)</b>을 눌러요</li>
+            <li>아래로 내려 <b>'홈 화면에 추가'</b>를 눌러요</li>
+            <li>이름을 '예현이의 숲'으로 하고 <b>추가</b>!</li>
+          </ol>
+        </div>
+        <div class="bg-gray-50 rounded-2xl p-3">
+          <p class="font-jua text-base text-gray-800 mb-1">🤖 안드로이드 (Chrome)</p>
+          <ol class="list-decimal pl-5 space-y-1">
+            <li>이 페이지를 <b>Chrome</b>으로 열어요</li>
+            <li>오른쪽 위 <b>⋮ 메뉴</b>를 눌러요</li>
+            <li><b>'홈 화면에 추가'</b> (또는 '앱 설치')를 눌러요</li>
+            <li><b>추가</b>를 누르면 끝!</li>
+          </ol>
+        </div>
+        <p class="text-xs text-gray-400">💡 설치한 앱의 기록은 그 휴대폰에 저장돼요. 휴대폰을 바꿀 땐 ⚙️ 설정 → 백업 코드로 옮겨 주세요.</p>
+      </div>
+    </div>
+
+    <div id="m-dday" class="modal hidden bg-white w-full max-w-sm rounded-[2rem] p-6 flex-col shadow-2xl overflow-y-auto">
+      <div class="flex justify-between items-center mb-3">
+        <h2 class="text-2xl text-green-600">📅 D-Day 관리</h2>
+        <button onclick="closeModal()" class="text-gray-400 text-3xl leading-none">&times;</button>
+      </div>
+      <div id="dday-list" class="flex flex-col gap-2 mb-4 font-sans text-sm"></div>
+      <div class="bg-green-50/60 rounded-2xl p-3 flex flex-col gap-2">
+        <p class="text-sm text-gray-600">새 D-Day 추가</p>
+        <div id="dday-types" class="grid grid-cols-3 gap-1.5"></div>
+        <div id="dday-subs-wrap" class="hidden"><p class="text-[11px] text-gray-500 font-sans mb-1">시험 과목 (시험기간 모드에서 추천에 써요)</p><div id="dday-subs" class="grid grid-cols-3 gap-1"></div></div>
+        <input id="dday-name" type="text" maxlength="20" placeholder="이름 (예: 2학기 기말고사)" class="p-2.5 rounded-xl bg-white border border-green-100 outline-none text-sm font-sans">
+        <input id="dday-date" type="date" class="p-2.5 rounded-xl bg-white border border-green-100 outline-none text-sm font-sans">
+        <button onclick="addDday()" class="bg-green-500 text-white py-2.5 rounded-xl">추가하기</button>
+      </div>
+    </div>
+
+    <div id="m-settings"class="modal hidden bg-white w-full max-w-sm rounded-[2rem] p-6 flex-col shadow-2xl overflow-y-auto">
+      <div class="flex justify-between items-center mb-3">
+        <h2 class="text-2xl text-green-600">⚙️ 설정</h2>
+        <button onclick="saveSettings()" class="text-gray-400 text-3xl leading-none">&times;</button>
+      </div>
+      <div class="flex flex-col gap-4 font-sans text-sm">
+        <label class="flex items-center justify-between gap-3">
+          <span><b class="font-jua text-base text-gray-700">🚨 강력 모드</b><br><span class="text-xs text-gray-400">켜짐: 화면을 벗어나면 바로 실패<br>꺼짐: 벗어나면 타이머만 멈춤</span></span>
+          <input id="set-strict" type="checkbox" class="w-6 h-6 accent-green-500">
+        </label>
+        <label class="flex items-center justify-between gap-3">
+          <span><b class="font-jua text-base text-gray-700">🔔 성공 효과음·진동</b></span>
+          <input id="set-sound" type="checkbox" class="w-6 h-6 accent-green-500">
+        </label>
+        <label class="flex items-center justify-between gap-3">
+          <span><b class="font-jua text-base text-gray-700">⏩ 테스트 모드</b><br><span class="text-xs text-gray-400">타이머 100배속 (기록은 실제 분으로 저장돼요)</span></span>
+          <input id="set-test" type="checkbox" class="w-6 h-6 accent-green-500">
+        </label>
+        <button onclick="openInstall()" class="w-full bg-green-50 text-green-700 py-2.5 rounded-xl font-jua">📲 홈 화면에 추가하는 방법</button>
+        <div>
+          <b class="font-jua text-base text-gray-700">🙋 학생 이름</b>
+          <input id="set-student" type="text" maxlength="12" class="mt-1 w-full p-2.5 rounded-xl bg-gray-50 border border-gray-200 outline-none">
+        </div>
+        <div>
+          <b class="font-jua text-base text-gray-700">👩‍🏫 선생님 이름</b>
+          <input id="set-teacher" type="text" maxlength="12" class="mt-1 w-full p-2.5 rounded-xl bg-gray-50 border border-gray-200 outline-none">
+        </div>
+        <div>
+          <b class="font-jua text-base text-gray-700">💌 응원 메시지</b>
+          <p class="text-xs text-gray-400 mb-1">한 줄에 하나씩. 성공할 때마다 이 중 하나가 랜덤으로 나와요.</p>
+          <textarea id="set-msgs" class="w-full h-40 p-2.5 rounded-xl bg-gray-50 border border-gray-200 outline-none text-xs resize-none"></textarea>
+          <button onclick="resetMsgs()" class="text-xs text-green-600 mt-1">기본 메시지로 되돌리기</button>
+        </div>
+        <div class="border-t border-green-100 pt-3">
+          <b class="font-jua text-base text-gray-700">💾 백업 / 기기 옮기기</b>
+          <p class="text-xs text-gray-400 mb-2">백업 코드를 복사해 두었다가 다른 기기에서 붙여넣으면 기록이 그대로 옮겨져요.</p>
+          <div class="flex gap-2">
+            <button onclick="copyBackup()" class="flex-1 bg-green-50 text-green-600 py-2 rounded-xl">백업 코드 복사</button>
+            <button onclick="toggleRestore()" class="flex-1 bg-green-50 text-green-600 py-2 rounded-xl">백업 불러오기</button>
+          </div>
+          <div id="restore-box" class="hidden mt-2">
+            <textarea id="restore-text" placeholder="여기에 백업 코드를 붙여넣기" class="w-full h-20 p-2 rounded-xl bg-gray-50 border border-gray-200 outline-none text-xs resize-none"></textarea>
+            <button onclick="doRestore()" class="w-full bg-green-400 text-white py-2 rounded-xl mt-1">불러오기</button>
+          </div>
+          <button onclick="askReset()" class="w-full text-xs text-gray-400 mt-3 underline">모든 기록 초기화</button>
+        </div>
+        <button onclick="saveSettings()" class="w-full bg-green-500 text-white py-3 rounded-xl text-lg font-jua">저장</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ================= 기본 데이터 ================= */
+const SUBJECTS = [
+  { k: '국어', e: '📘', c: '#60A5FA', f: '🌷' },
+  { k: '영어', e: '📕', c: '#F87171', f: '🌹' },
+  { k: '수학', e: '📗', c: '#34D399', f: '🍀' },
+  { k: '통합사회', e: '📙', c: '#FBBF24', f: '🌻' },
+  { k: '통합과학', e: '🔬', c: '#A78BFA', f: '🌼' },
+  { k: '한국사', e: '📜', c: '#F472B6', f: '🌸' },
+];
+const SUB = Object.fromEntries(SUBJECTS.map(s => [s.k, s]));
+
+const DEFAULT_MSGS = [
+  '오늘 버틴 이 시간이 내일의 너를 만든단다. 정말 잘했어!',
+  '남들과 비교하지 마. 어제의 너보다 한 걸음 나아갔으면 충분해.',
+  '공부는 재능보다 끈기야. 오늘도 끝까지 해낸 너, 진짜 멋져!',
+  '지금 흘린 땀방울은 절대 너를 배신하지 않아.',
+  '힘들다는 건 성장하고 있다는 증거야. 조금만 더 가보자!',
+  '완벽하지 않아도 괜찮아. 꾸준한 사람이 결국 이긴단다.',
+  '포기하고 싶은 순간을 넘긴 너, 이미 어제보다 강해졌어.',
+  '작은 성공이 모여서 큰 꿈이 돼. 오늘의 집중도 소중한 한 조각이야.',
+  '틀린 문제는 실패가 아니라, 네가 더 클 수 있는 곳을 알려주는 신호야.',
+  '선생님은 언제나 네 편이야. 오늘도 수고 많았어!',
+  '천천히 가도 멈추지만 않으면 돼. 너는 지금 잘 가고 있어.',
+  '집중한 시간만큼 꿈이 가까워졌어. 스스로를 많이 칭찬해 줘!',
+  '1등이 아니어도 괜찮아. 네 속도로 끝까지 가는 게 진짜 실력이야.',
+  '어려운 문제 앞에서 도망가지 않은 너, 그때 실력이 쌓이는 거야.',
+  '지금의 노력이 나중에 너에게 \'고마워\'라고 말해줄 거야.',
+  '공부가 지겨울 땐 이루고 싶은 꿈을 떠올려 봐. 넌 할 수 있어!',
+  '매일 조금씩, 그게 가장 빠른 길이야. 오늘도 해냈네!',
+  '네가 생각하는 것보다 넌 훨씬 잘하고 있어. 자신감 가져!',
+  '몸과 마음도 챙기면서 하자. 물 한 잔 마시고 기지개 쭉~',
+  '오늘 쌓은 시간은 아무도 가져갈 수 없는 너만의 재산이야.',
+  '끝까지 버틴 사람이 웃는 거야. 오늘도 정말 잘 버텼어!',
+  '느려도 괜찮아. 중요한 건 방향이고, 넌 맞는 방향으로 가고 있어.',
+  '성실함은 가장 강한 재능이야. 그 재능, 너한테 있어!',
+  '가장 어두운 밤이 지나면 가장 밝은 아침이 와. 잘 버텼어!',
+];
+
+const BADGES = [
+  { id: 'first', icon: '🌱', name: '첫 잎', desc: '첫 목표 달성', test: s => s.totalSuccess >= 1 },
+  { id: 's10', icon: '🍃', name: '잎 10장', desc: '목표 10번 달성', test: s => s.totalSuccess >= 10 },
+  { id: 's50', icon: '🌿', name: '잎 50장', desc: '목표 50번 달성', test: s => s.totalSuccess >= 50 },
+  { id: 'st3', icon: '🔥', name: '3일 연속', desc: '3일 연속 공부', test: () => bestStreak() >= 3 },
+  { id: 'st7', icon: '🏆', name: '일주일 완주', desc: '7일 연속 공부', test: () => bestStreak() >= 7 },
+  { id: 'long60', icon: '💪', name: '1시간 몰입', desc: '한 번에 60분+', test: s => s.sessions.some(x => x.ok && x.min >= 60) },
+  { id: 'day3h', icon: '🚀', name: '하루 3시간', desc: '하루 180분+', test: s => Object.keys(s.daily).some(d => dayTotal(d) >= 180) },
+  { id: 'h10', icon: '⏰', name: '10시간', desc: '누적 10시간', test: () => totalMinutes() >= 600 },
+  { id: 'all6', icon: '🌈', name: '골고루', desc: '6과목 모두 공부', test: s => SUBJECTS.every(x => s.sessions.some(y => y.ok && y.sub === x.k)) },
+  { id: 'todo100', icon: '✅', name: '목표 완벽', desc: '하루 목표 100%', test: s => Object.values(s.todos).some(l => l.length >= 2 && l.every(t => t.done)) },
+  { id: 'tree1', icon: '🌳', name: '첫 큰 나무', desc: '나무 1그루 완성', test: s => s.forest && s.forest.trees.length >= 1 },
+  { id: 'tree5', icon: '🏞️', name: '작은 숲', desc: '나무 5그루 완성', test: s => s.forest && s.forest.trees.length >= 5 },
+];
+
+/* ================= 날짜·포맷 ================= */
+const pad = n => String(n).padStart(2, '0');
+const ds = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const today = () => ds(new Date());
+function addDays(str, n) { const [y, m, d] = str.split('-').map(Number); return ds(new Date(y, m - 1, d + n)); }
+function dow(str) { const [y, m, d] = str.split('-').map(Number); return '일월화수목금토'[new Date(y, m - 1, d).getDay()]; }
+function md(str) { const [, m, d] = str.split('-').map(Number); return `${m}/${d}(${dow(str)})`; }
+function fmtMin(m) { m = Math.round(m); if (m >= 60) { const h = Math.floor(m / 60), r = m % 60; return r ? `${h}시간 ${r}분` : `${h}시간`; } return `${m}분`; }
+function fmtShort(m) { m = Math.round(m); if (m >= 60) { const h = Math.floor(m / 60), r = m % 60; return r ? `${h}h${r}` : `${h}h`; } return `${m}m`; }
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+/* ================= 상태 저장 ================= */
+const LS_KEY = 'yehyun-challenge-v2';
+function defaultState() {
+  return {
+    v: 2, updatedAt: 0,
+    settings: { student: '예현', teacher: '은지쌤', strict: true, sound: true, test: false, messages: DEFAULT_MSGS.slice() },
+    ddays: [],       // { id, type, name, date, subs }
+    animals: {},     // { 다람쥐: 'YYYY-MM-DD' }
+    weekGoals: {},   // { 주 시작(월) 날짜: 분 }
+    forest: emptyForest(),    // { trees: [{sp, done, leaves}], cur: {sp, days: [...], leaves} }
+    subject: '국어', mode: 'auto', freeGoal: 30,
+    cycle: { goal: 30, sets: 3, brk: 5 },
+    auto: Object.fromEntries(SUBJECTS.map(s => [s.k, { goal: 30, streak: 0, last: null, next: null, nextFrom: null }])),
+    totalSuccess: 0, totalFail: 0,
+    daily: {},       // { 'YYYY-MM-DD': { 국어: 30, ... } }
+    sessions: [],    // { d, t, sub, min, ok, why, mode }
+    todos: {},       // { 'YYYY-MM-DD': [ {id, sub, task, target, done} ] }
+    badges: {},      // { id: 'YYYY-MM-DD' }
+    active: null,
+  };
+}
+function migrate(s) {
+  const d = defaultState();
+  if (!s || typeof s !== 'object') return d;
+  const o = Object.assign(d, s);
+  o.settings = Object.assign(defaultState().settings, s.settings || {});
+  if (!Array.isArray(o.settings.messages) || !o.settings.messages.length) o.settings.messages = DEFAULT_MSGS.slice();
+  o.cycle = Object.assign(defaultState().cycle, s.cycle || {});
+  o.auto = o.auto || {};
+  SUBJECTS.forEach(x => { if (!o.auto[x.k]) o.auto[x.k] = { goal: 30, streak: 0, last: null, next: null, nextFrom: null }; });
+  if (!SUB[o.subject]) o.subject = '국어';
+  ['daily', 'todos', 'badges'].forEach(k => { if (!o[k] || typeof o[k] !== 'object') o[k] = {}; });
+  if (!Array.isArray(o.sessions)) o.sessions = [];
+  if (!Array.isArray(o.ddays)) o.ddays = [];
+  if (!o.animals || typeof o.animals !== 'object') o.animals = {};
+  if (!o.weekGoals || typeof o.weekGoals !== 'object') o.weekGoals = {};
+  if (!s.forest || !s.forest.cur || !Array.isArray(s.forest.trees)) o.forest = rebuildForest(o);
+  if (!Array.isArray(o.forest.allDays)) o.forest.allDays = [...new Set([...o.sessions.filter(x => x.ok && x.fl !== false).map(x => x.d), ...o.forest.cur.days])].sort();
+  return o;
+}
+let state;
+try { state = migrate(JSON.parse(localStorage.getItem(LS_KEY) || 'null')); } catch (e) { state = defaultState(); }
+
+let readOnlyView = false;   // 선생님이 학생 기록을 볼 때는 저장하지 않음
+function saveLocal() { if (readOnlyView) return; try { localStorage.setItem(LS_KEY, JSON.stringify(state)); } catch (e) { } }
+function save() {
+  if (readOnlyView) return;
+  state.updatedAt = Date.now();
+  if (state.sessions.length > 600) state.sessions = state.sessions.slice(-600);
+  saveLocal();
+  cloudQueue();
+}
+// 다른 학생의 데이터로 잠깐 계산할 때 사용 (선생님 모드)
+function withState(s, fn) { const saved = state, ro = readOnlyView; state = s; readOnlyView = true; try { return fn(); } finally { state = saved; readOnlyView = ro; } }
+
+/* ---- 클라우드 동기화: students/<내 id> 에 저장 → 선생님(페이지 주인)이 자동으로 볼 수 있음 ---- */
+const cloud = { ref: null, busy: false, again: false, timer: null, db: null, id: null, isOwner: false };
+let myStamps = {};   // { 'YYYY-MM-DD': 'best' }
+const STAMPS = { check: { e: '👀', t: '확인했어요' }, good: { e: '👍', t: '잘했어요' }, best: { e: '🌟', t: '최고예요' }, cheer: { e: '💪', t: '힘내자' } };
+function setSync(mode) {
+  const b = document.getElementById('sync-badge');
+  // [수정] 헤더 한 줄 유지를 위해 아이콘만 표시 (설명은 title)
+  const base = 'w-9 h-9 rounded-full flex items-center justify-center text-base ';
+  if (mode === 'on') { b.textContent = '☁️'; b.title = '계정에 자동 저장 중'; b.className = base + 'bg-emerald-50'; }
+  else if (mode === 'err') { b.textContent = '⏳'; b.title = '저장 재시도 중'; b.className = base + 'bg-amber-50'; }
+  else { b.textContent = '📱'; b.title = '이 기기에 저장 중'; b.className = base + 'bg-gray-50'; }
+}
+function cloudQueue() { if (!cloud.ref) return; clearTimeout(cloud.timer); cloud.timer = setTimeout(cloudFlush, 1500); }
+async function cloudFlush() {
+  if (!cloud.ref) return;
+  if (cloud.busy) { cloud.again = true; return; }
+  cloud.busy = true;
+  try {
+    const copy = Object.assign({}, state, { active: null });
+    const a = state.active;
+    const live = a ? { sub: a.sub, since: a.startAt || Date.now(), sw: !!a.sw, min: a.min || 0 } : null;
+    await cloud.ref.set({ json: JSON.stringify(copy), updatedAt: state.updatedAt, name: state.settings.student || '학생', live });
+    setSync('on');
+  } catch (e) {
+    const code = e && e.code;
+    if (code === 'invalid_argument' || code === 'revoked' || code === 'not_granted' || code === 'capability_disabled' || code === 'quota_exceeded') { cloud.ref = null; setSync('off'); }
+    else setSync('err');
+  }
+  cloud.busy = false;
+  if (cloud.again) { cloud.again = false; cloudFlush(); }
+}
+async function initCloud() {
+  try {
+    if (!window.claude || typeof window.claude.use !== 'function') return;
+    const [db, user] = await Promise.all([window.claude.use('db'), window.claude.use('user')]);
+    if (!db || !user) return;
+    const id = await user.id();
+    if (!id) return;
+    cloud.db = db; cloud.id = id;
+    try { cloud.isOwner = !!(await user.isOwner()); } catch (e) { }
+    if (cloud.isOwner) setupTeacher(db);
+    // 선생님 도장 받기
+    try {
+      db.doc('stamps/' + id).onSnapshot(s => {
+        myStamps = (s.exists && s.data().days) || {};
+        let seen = {}; try { seen = JSON.parse(localStorage.getItem('yh-stamps-seen') || '{}'); } catch (e) { }
+        const fresh = Object.keys(myStamps).filter(d => seen[d] !== myStamps[d]);
+        if (fresh.length && Object.keys(seen).length + fresh.length > 0) {
+          const d = fresh.sort().pop(), st = STAMPS[myStamps[d]];
+          if (st) toast(`💮 ${state.settings.teacher}이 ${md(d)} 기록에 '${st.e} ${st.t}' 도장을 찍었어요`);
+          fresh.forEach(x => seen[x] = myStamps[x]);
+          try { localStorage.setItem('yh-stamps-seen', JSON.stringify(seen)); } catch (e) { }
+        }
+        if (currentTab === 'cal') renderCalendar();
+      }, () => { });
+    } catch (e) { }
+    const ref = db.doc('students/' + id);
+    const snap = await Promise.race([ref.get(), new Promise((_, rej) => setTimeout(() => rej({ code: 'timeout' }), 10000))]);
+    cloud.ref = ref;
+    let remote = null;
+    if (snap.exists) { try { remote = JSON.parse(snap.data().json); } catch (e) { } }
+    if (remote && (remote.updatedAt || 0) > (state.updatedAt || 0)) {
+      const keepActive = state.active;
+      state = migrate(remote); state.active = keepActive;
+      try { localStorage.setItem(LS_KEY, JSON.stringify(state)); } catch (e) { }
+      renderAll();
+      toast('☁️ 저장된 기록을 불러왔어요');
+      setSync('on');
+    } else if (!remote || (state.updatedAt || 0) > (remote.updatedAt || 0)) {
+      if (state.updatedAt) cloudFlush(); else setSync('on');
+    } else setSync('on');
+  } catch (e) { setSync('off'); }
+}
+
+/* ================= 계산 헬퍼 ================= */
+function dayTotal(d) { const o = state.daily[d]; return o ? Object.values(o).reduce((a, b) => a + b, 0) : 0; }
+function totalMinutes() { return Object.keys(state.daily).reduce((a, d) => a + dayTotal(d), 0); }
+function currentStreak() {
+  let d = today(); if (dayTotal(d) === 0) d = addDays(d, -1);
+  let n = 0; while (dayTotal(d) > 0) { n++; d = addDays(d, -1); }
+  return n;
+}
+function bestStreak() {
+  const days = Object.keys(state.daily).filter(d => dayTotal(d) > 0).sort();
+  let best = 0, run = 0, prev = null;
+  days.forEach(d => { run = (prev && addDays(prev, 1) === d) ? run + 1 : 1; best = Math.max(best, run); prev = d; });
+  return best;
+}
+function autoInfo(sub) {
+  const a = state.auto[sub];
+  if (a.next && a.nextFrom && a.nextFrom <= today()) { a.goal = a.next; a.next = null; a.nextFrom = null; save(); }
+  const t = today();
+  const alive = a.last === t || a.last === addDays(t, -1);
+  return { goal: a.goal, streak: alive ? a.streak : 0, doneToday: a.last === t, next: a.next };
+}
+function periodRange(p) {
+  const t = today();
+  if (p === 'today') return [t, t];
+  if (p === 'week') return [addDays(t, -6), t];
+  if (p === 'month') return [t.slice(0, 8) + '01', t];
+  const all = Object.keys(state.daily).sort();
+  return [all[0] || t, t];
+}
+function subjectTotals(from, to) {
+  const r = Object.fromEntries(SUBJECTS.map(s => [s.k, 0]));
+  Object.entries(state.daily).forEach(([d, o]) => { if (d >= from && d <= to) Object.entries(o).forEach(([k, v]) => { if (k in r) r[k] += v; }); });
+  return r;
+}
+
+/* ================= 나무 & 숲 ================= */
+const TREE_DAYS = 30;   // 30일 달성하면 큰 나무 1그루 완성
+const SPECIES = [
+  { n: '느티나무', shape: 'round', leaf: ['#43A047', '#66BB6A', '#4CAF50'], trunk: '#8D6E63', desc: '마을을 지키는 든든한 정자나무' },
+  { n: '밤나무', shape: 'round', leaf: ['#558B2F', '#689F38', '#7CB342'], trunk: '#795548', extra: 'burr', desc: '가을이면 알밤이 툭툭' },
+  { n: '소나무', shape: 'pine', leaf: ['#2E7D32', '#388E3C', '#1B5E20'], trunk: '#A1887F', desc: '사계절 푸른 끈기의 상징' },
+  { n: '은행나무', shape: 'tall', leaf: ['#C0CA33', '#D4E157', '#AFB42B'], trunk: '#8D6E63', desc: '수천 년을 버티는 살아있는 화석' },
+  { n: '벚나무', shape: 'round', leaf: ['#F8BBD0', '#F48FB1', '#81C784'], trunk: '#6D4C41', desc: '봄이면 꽃비가 내리는 나무' },
+  { n: '단풍나무', shape: 'round', leaf: ['#E53935', '#FB8C00', '#F4511E'], trunk: '#6D4C41', desc: '노력이 곱게 물드는 나무' },
+  { n: '자작나무', shape: 'tall', leaf: ['#9CCC65', '#AED581', '#8BC34A'], trunk: '#F1EFEA', extra: 'birch', desc: '하얀 껍질의 숲속 귀족' },
+  { n: '사과나무', shape: 'round', leaf: ['#7CB342', '#8BC34A', '#689F38'], trunk: '#795548', extra: 'apple', desc: '노력의 열매가 주렁주렁' },
+  { n: '메타세쿼이아', shape: 'cone', leaf: ['#7CB342', '#689F38', '#9CCC65'], trunk: '#8D6E63', desc: '하늘까지 곧게 뻗는 나무' },
+  { n: '전나무', shape: 'cone', leaf: ['#1B5E20', '#2E7D32', '#33691E'], trunk: '#6D4C41', desc: '겨울에도 꿋꿋한 숲의 기둥' },
+];
+const STAGES = [{ d: 0, n: '씨앗' }, { d: 1, n: '새싹' }, { d: 5, n: '묘목' }, { d: 12, n: '어린 나무' }, { d: 20, n: '청년 나무' }, { d: 30, n: '큰 나무' }];
+function stageIdx(days) { let i = 0; STAGES.forEach((s, j) => { if (days >= s.d) i = j; }); return i; }
+function emptyForest() { return { trees: [], cur: { sp: 0, days: [], leaves: 0 }, allDays: [] }; }
+
+// 잎 1장 추가 → 오늘이 새 달성일이면 나무가 하루 자람, 30일이면 숲으로 이동
+function addLeaf(f, date) {
+  const ev = { newDay: false, stageUp: null, done: null };
+  const c = f.cur;
+  c.leaves++;
+  f.allDays = f.allDays || [];
+  if (!f.allDays.includes(date)) f.allDays.push(date);
+  if (!c.days.includes(date) && date !== c.from) {
+    const before = stageIdx(c.days.length);
+    c.days.push(date); ev.newDay = true;
+    const after = stageIdx(c.days.length);
+    if (after > before) ev.stageUp = STAGES[after].n;
+    if (c.days.length >= TREE_DAYS) {
+      f.trees.push({ sp: c.sp, done: date, leaves: c.leaves });
+      ev.done = c.sp;
+      f.cur = { sp: (c.sp + 1) % SPECIES.length, days: [], leaves: 0, from: date };
+    }
+  }
+  return ev;
+}
+// 예전 기록(세션)으로 숲을 다시 계산 (처음 업데이트할 때 한 번)
+function rebuildForest(s) {
+  const f = emptyForest();
+  (s.sessions || []).filter(x => x.ok && x.fl !== false).sort((a, b) => (a.e || 0) - (b.e || 0)).forEach(x => addLeaf(f, x.d));
+  return f;
+}
+
+function rng(seed) { return function () { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function leafPath(x, y, s, rot, color) {
+  return `<path d="M0 0 q${(s * .9).toFixed(1)} ${(-s * .9).toFixed(1)} 0 ${(-s * 2).toFixed(1)} q${(-s * .9).toFixed(1)} ${(s * .9).toFixed(1)} 0 ${(s * 2).toFixed(1)}z" transform="translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${rot.toFixed(0)})" fill="${color}"/>`;
+}
+// 나무 그리기: days(0~30)로 크기, leaves로 잎 개수
+function treeSVG(spIdx, days, leaves, o = {}) {
+  const sp = SPECIES[spIdx % SPECIES.length];
+  const p = Math.min(1, days / TREE_DAYS);
+  const ground = o.ground === false ? '' : `<ellipse cx="100" cy="182" rx="${(36 + 44 * p).toFixed(0)}" ry="7" fill="#C5E1A5" opacity=".8"/>`;
+  const wrap = g => `<svg viewBox="${o.viewBox || '0 0 200 200'}" class="w-full h-full">${ground}${g}</svg>`;
+  if (days === 0 && leaves === 0) {
+    return wrap(`<path d="M80 182 q20 -16 40 0z" fill="#A1887F"/><ellipse cx="100" cy="173" rx="5" ry="3.6" fill="#6D4C41"/><path d="M100 170 q1 -5 4 -6" stroke="#7CB342" stroke-width="1.6" fill="none" stroke-linecap="round"/>`);
+  }
+  const baseY = 180, trunkH = 16 + 86 * p, trunkW = 2.2 + 11 * p, topY = baseY - trunkH;
+  const young = p < .17;
+  const trunkC = young ? '#7CB342' : sp.trunk;
+  let g = '';
+  // 수관(잎이 붙는 영역)
+  let ells = [], tri = null;
+  if (sp.shape === 'round') {
+    const rx = 12 + 60 * p, ry = 9 + 44 * p, cy = topY - ry * .2;
+    ells = [[100, cy, rx, ry]];
+    if (p > .35) ells.push([100 - rx * .55, cy + ry * .3, rx * .55, ry * .6], [100 + rx * .55, cy + ry * .3, rx * .55, ry * .6]);
+  } else if (sp.shape === 'tall') {
+    const rx = 9 + 32 * p, ry = 12 + 50 * p;
+    ells = [[100, topY - ry * .2, rx, ry]];
+  } else if (sp.shape === 'pine') {
+    const w = 12 + 52 * p, h = 6 + 16 * p;
+    ells = [[100 - 6 * p, topY + 2, w, h], [100 + 8 * p, topY - 6 - 24 * p, w * .78, h * .9], [100 - 2 * p, topY - 10 - 46 * p, w * .52, h * .8]];
+  } else {
+    const coneH = 18 + 128 * p, half = 9 + 40 * p, bottom = baseY - trunkH * .25;
+    tri = [[100, bottom - coneH], [100 - half, bottom], [100 + half, bottom]];
+  }
+  // 줄기
+  g += `<path d="M${100 - trunkW / 2} ${baseY} L${100 - trunkW * .3} ${topY} L${100 + trunkW * .3} ${topY} L${100 + trunkW / 2} ${baseY}Z" fill="${trunkC}" ${sp.extra === 'birch' && !young ? 'stroke="#C9C4BA" stroke-width="1"' : ''}/>`;
+  if (sp.extra === 'birch' && !young) for (let i = 1; i < 5; i++) { const y = baseY - trunkH * i / 5; g += `<path d="M${100 - trunkW * .35} ${y} l${trunkW * .4} 1.5" stroke="#4E4A45" stroke-width="1.4" stroke-linecap="round"/>`; }
+  // 가지
+  if (p > .25 && !tri) {
+    const bw = Math.max(1.2, trunkW * .32), cy = ells[0][1], rx = ells[0][2];
+    g += `<path d="M100 ${topY + trunkH * .15} Q${100 - rx * .3} ${cy + 6} ${100 - rx * .6} ${cy}" stroke="${trunkC}" stroke-width="${bw}" fill="none" stroke-linecap="round"/>`;
+    g += `<path d="M100 ${topY + trunkH * .05} Q${100 + rx * .3} ${cy + 4} ${100 + rx * .62} ${cy - 4}" stroke="${trunkC}" stroke-width="${bw}" fill="none" stroke-linecap="round"/>`;
+  }
+  // 수관 실루엣 (잎이 쌓일수록 울창해짐)
+  const op = (.16 + .3 * p).toFixed(2);
+  if (tri) g += `<path d="M${tri[0].join(' ')} L${tri[1].join(' ')} L${tri[2].join(' ')}Z" fill="${sp.leaf[0]}" opacity="${op}"/>`;
+  else ells.forEach(e => { g += `<ellipse cx="${e[0].toFixed(1)}" cy="${e[1].toFixed(1)}" rx="${e[2].toFixed(1)}" ry="${e[3].toFixed(1)}" fill="${sp.leaf[0]}" opacity="${op}"/>`; });
+  // 잎
+  const R = rng(spIdx * 7919 + 101);
+  const n = Math.min(leaves, o.maxLeaves || 160);
+  const s = 3.2 + 3.2 * p;
+  const areas = ells.map(e => e[2] * e[3]), tot = areas.reduce((a, b) => a + b, 0);
+  for (let i = 0; i < n; i++) {
+    const u = R(), v = R(), w = R(), r1 = R(), r2 = R();
+    let x, y;
+    if (tri) { let a = u, b = v; if (a + b > 1) { a = 1 - a; b = 1 - b; } x = tri[0][0] + a * (tri[1][0] - tri[0][0]) + b * (tri[2][0] - tri[0][0]); y = tri[0][1] + a * (tri[1][1] - tri[0][1]) + b * (tri[2][1] - tri[0][1]) + s; }
+    else { let k = 0, acc = w * tot; while (k < ells.length - 1 && acc > areas[k]) { acc -= areas[k]; k++; } const e = ells[k], ang = u * Math.PI * 2, rad = Math.sqrt(v) * .95; x = e[0] + e[2] * rad * Math.cos(ang); y = e[1] + e[3] * rad * Math.sin(ang) + s; }
+    g += leafPath(x, y, s * (.8 + r1 * .4), r2 * 360, sp.leaf[Math.floor(R() * sp.leaf.length)]);
+  }
+  // 열매
+  if (p >= .6 && (sp.extra === 'apple' || sp.extra === 'burr')) {
+    const F = rng(spIdx * 31 + 7), e = ells[0];
+    for (let i = 0; i < 7; i++) {
+      const ang = F() * Math.PI * 2, rad = Math.sqrt(F()) * .8, x = e[0] + e[2] * rad * Math.cos(ang), y = e[1] + e[3] * rad * Math.sin(ang);
+      g += sp.extra === 'apple'
+        ? `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3.6" fill="#E53935"/><circle cx="${(x - 1).toFixed(1)}" cy="${(y - 1.2).toFixed(1)}" r="1" fill="#fff" opacity=".7"/>`
+        : `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3.4" fill="#C0A230" stroke="#827717" stroke-width="1.2" stroke-dasharray="1 1.2"/>`;
+    }
+  }
+  return wrap(g);
+}
+
+// 집중 중: 잎 한 장이 자라는 모습
+function sproutSVG(p) {
+  p = Math.max(0, Math.min(1, p));
+  const s = 8 + 26 * p, c = p < .33 ? '#AED581' : p < .66 ? '#7CB342' : '#43A047';
+  return `<svg viewBox="0 0 100 100" class="w-full h-full">
+    <ellipse cx="50" cy="93" rx="24" ry="4.5" fill="#C5E1A5"/>
+    <path d="M50 92 Q47 72 52 54" stroke="#8D6E63" stroke-width="4" fill="none" stroke-linecap="round"/>
+    ${p > .35 ? `<g transform="translate(49 76) rotate(-60)"><path d="M0 0 q${s * .22} ${-s * .25} 0 ${-s * .5} q${-s * .22} ${s * .25} 0 ${s * .5}z" fill="#9CCC65"/></g>` : ''}
+    <g transform="translate(52 55) rotate(28)"><path d="M0 0 q${s * .45} ${-s * .5} 0 ${-s} q${-s * .45} ${s * .5} 0 ${s}z" fill="${c}"/><path d="M0 0 L0 ${-s * .85}" stroke="#2E7D32" stroke-width="1" opacity=".5"/></g>
+  </svg>`;
+}
+
+/* ================= 숲 동물 친구 & 목마름 ================= */
+const ANIMALS = [
+  { n: 3, e: '🐿️', k: '다람쥐', pos: 'left:6%;bottom:4%;font-size:26px' },
+  { n: 7, e: '🐦', k: '참새', pos: 'right:20%;top:26%;font-size:20px' },
+  { n: 14, e: '🐇', k: '토끼', pos: 'right:4%;bottom:3%;font-size:26px' },
+  { n: 21, e: '🦌', k: '사슴', pos: 'left:-6%;bottom:16%;font-size:30px' },
+  { n: 30, e: '🦉', k: '부엉이', pos: 'left:24%;top:18%;font-size:22px' },
+];
+function achSet() { return new Set(state.forest.allDays || []); }
+function achStreak() {
+  const set = achSet(); let d = today();
+  if (!set.has(d)) d = addDays(d, -1);
+  let n = 0; while (set.has(d)) { n++; d = addDays(d, -1); }
+  return n;
+}
+function bestAchStreak() {
+  const days = (state.forest.allDays || []).slice().sort();
+  let best = 0, run = 0, prev = null;
+  days.forEach(d => { run = (prev && addDays(prev, 1) === d) ? run + 1 : 1; best = Math.max(best, run); prev = d; });
+  return best;
+}
+function daysSinceAch() {
+  const a = state.forest.allDays || [];
+  if (!a.length) return null;
+  const last = a.slice().sort().pop();
+  return -ddayDiff(last);
+}
+// 3일 동안 달성이 없으면 나무가 목말라요 (기록은 줄어들지 않음)
+function isThirsty() { const n = daysSinceAch(); return n != null && n >= 3; }
+function checkAnimals() {
+  const best = bestAchStreak(), fresh = [];
+  ANIMALS.forEach(a => { if (best >= a.n && !state.animals[a.k]) { state.animals[a.k] = today(); fresh.push(a); } });
+  return fresh;
+}
+function nextAnimal() { const st = achStreak(); return ANIMALS.find(a => !state.animals[a.k] && a.n > st) || null; }
+function renderAnimals() {
+  const thirsty = isThirsty();
+  document.getElementById('animals').innerHTML = thirsty ? '' :
+    ANIMALS.filter(a => state.animals[a.k]).map((a, i) => `<span class="absolute anim-float" style="${a.pos};animation-delay:${i * .4}s" title="${a.k}">${a.e}</span>`).join('');
+  document.getElementById('tree').classList.toggle('thirsty', thirsty);
+  const bub = document.getElementById('thirst-bubble');
+  bub.classList.toggle('hidden', !thirsty);
+  if (thirsty) bub.textContent = `💧 목말라요… ${daysSinceAch()}일째 물을 못 마셨어요`;
+}
+
+/* ================= 주간 목표 & 과목 균형 추천 ================= */
+function weekStart(d = today()) { const [y, m, dd] = d.split('-').map(Number); const w = (new Date(y, m - 1, dd).getDay() + 6) % 7; return addDays(d, -w); }
+function weekTotal(ws) { let t = 0; for (let i = 0; i < 7; i++) t += dayTotal(addDays(ws, i)); return t; }
+function recommendWeekGoal(ws) {
+  const last = weekTotal(addDays(ws, -7));
+  return last > 0 ? Math.max(120, Math.min(3600, Math.round(last * 1.1 / 30) * 30)) : 420;
+}
+function weekGoal() {
+  const ws = weekStart();
+  if (state.weekGoals[ws] == null) { state.weekGoals[ws] = recommendWeekGoal(ws); save(); }
+  return state.weekGoals[ws];
+}
+function bumpWeekGoal(d) { const ws = weekStart(); state.weekGoals[ws] = Math.max(60, Math.min(6000, weekGoal() + d)); save(); renderWeekCard(); }
+function renderWeekCard() {
+  const el = document.getElementById('week-card'); if (!el) return;
+  const ws = weekStart(), goal = weekGoal(), done = weekTotal(ws), pct = Math.min(100, Math.round(done / goal * 100));
+  const remainDays = Math.max(1, 7 + ddayDiff(ws)); // 오늘 포함 남은 날
+  const need = Math.max(0, goal - done);
+  const last = weekTotal(addDays(ws, -7));
+  el.innerHTML = `
+    <div class="flex justify-between items-center mb-2">
+      <h3 class="text-green-700">📆 이번 주 목표</h3>
+      <div class="flex items-center gap-1">
+        <button onclick="bumpWeekGoal(-30)" class="w-7 h-7 rounded-lg bg-green-50 text-green-700">−</button>
+        <span class="text-lg text-green-700 w-24 text-center">${fmtMin(goal)}</span>
+        <button onclick="bumpWeekGoal(30)" class="w-7 h-7 rounded-lg bg-green-50 text-green-700">+</button>
+      </div>
+    </div>
+    <div class="flex items-center gap-3">
+      <div class="flex-1 bg-green-50 rounded-full h-3 overflow-hidden"><div class="h-3 rounded-full bg-gradient-to-r from-lime-400 to-green-600 transition-all" style="width:${pct}%"></div></div>
+      <span class="text-sm text-green-700">${pct}%</span>
+    </div>
+    <p class="text-xs text-gray-500 font-sans mt-2">${need > 0 ? `지금 ${fmtMin(done)} · 남은 ${remainDays}일 동안 하루 평균 <b class="text-green-700">${fmtMin(Math.ceil(need / remainDays))}</b>이면 달성!` : `🎉 이번 주 목표 달성! (${fmtMin(done)})`}</p>
+    <p class="text-[10px] text-gray-400 font-sans mt-0.5">지난주 ${fmtMin(last)} → 추천 ${fmtMin(recommendWeekGoal(ws))} (지난주 +10%) · ±30분으로 조절할 수 있어요</p>`;
+}
+function recommendSubjects(n = 1) {
+  const ex = examInfo();
+  const pool = ex && ex.subs && ex.subs.length ? ex.subs : SUBJECTS.map(s => s.k);
+  const tot = subjectTotals(addDays(today(), -6), today());
+  return pool.filter(k => SUB[k]).sort((a, b) => tot[a] - tot[b]).slice(0, n).map(k => ({ k, m: tot[k] }));
+}
+function renderRecommend() {
+  const el = document.getElementById('rec-box'); if (!el) return;
+  const r = recommendSubjects(1)[0];
+  if (!r) { el.innerHTML = ''; return; }
+  const ex = examInfo();
+  el.innerHTML = r.k === state.subject ? `<p class="text-[11px] text-green-700 font-sans">💡 좋아요! ${esc(r.k)}은(는) ${ex ? '시험 과목 중 ' : ''}최근 7일 동안 가장 덜 한 과목이에요</p>`
+    : `<button onclick="pickRec('${r.k}')" class="w-full text-left text-[11px] font-sans bg-lime-50 border border-lime-200 rounded-lg px-2.5 py-1.5 text-gray-600">💡 오늘의 추천: <b class="text-green-700">${SUB[r.k].e} ${r.k}</b> (${ex ? '시험 과목 중 ' : ''}최근 7일 ${fmtMin(r.m)}) <span class="text-green-600">→ 선택</span></button>`;
+}
+function pickRec(k) { state.subject = k; save(); renderSetup(); }
+
+/* ================= 시험기간 모드 (D-14) ================= */
+const EXAM_TYPES = ['mid', 'final', 'mock', 'suneung'];
+const EXAM_WINDOW = 14;
+function examInfo() { return upcomingDdays().find(d => EXAM_TYPES.includes(d.type) && ddayDiff(d.date) <= EXAM_WINDOW) || null; }
+function examPlan() {
+  const ex = examInfo(); if (!ex) return [];
+  const n = ddayDiff(ex.date), per = n <= 3 ? 60 : 50;
+  return recommendSubjects(3).map(r => ({ k: r.k, min: per }));
+}
+function renderExamCard() {
+  const el = document.getElementById('exam-card');
+  const ex = examInfo();
+  if (!ex || state.active) { el.classList.add('hidden'); return; }
+  el.classList.remove('hidden');
+  const n = ddayDiff(ex.date), plan = examPlan();
+  const subs = ex.subs && ex.subs.length && ex.subs.length < 6 ? ex.subs.join('·') : '전 과목';
+  el.innerHTML = `
+    <div class="flex items-center justify-between">
+      <div><p class="text-[11px] text-amber-700 font-sans">📝 시험기간 모드 · ${esc(subs)}</p><p class="text-lg text-gray-700">${esc(ex.name)}</p></div>
+      <div class="text-right"><p class="text-3xl ${n <= 3 ? 'text-red-500' : 'text-amber-600'}">${ddayLabel(n)}</p><p class="text-[10px] text-gray-400 font-sans">${md(ex.date)}</p></div>
+    </div>
+    <div class="mt-2 bg-white/70 rounded-xl p-2">
+      <p class="text-[11px] text-gray-500 font-sans mb-1">오늘의 추천 플랜 (덜 한 시험 과목 순)</p>
+      <div class="flex flex-wrap gap-1">${plan.map(p => `<span class="text-xs rounded-full px-2 py-1" style="background:${SUB[p.k].c}22;color:#374151">${SUB[p.k].e} ${p.k} ${p.min}분</span>`).join('')}</div>
+      <button onclick="addExamPlan()" class="mt-2 w-full text-xs bg-amber-400 text-white rounded-lg py-1.5">오늘 목표에 추가하기</button>
+    </div>`;
+}
+function addExamPlan() {
+  const list = todayTodos(); let added = 0;
+  examPlan().forEach(p => {
+    if (!list.some(t => t.sub === p.k && t.task.startsWith('[시험대비]'))) { list.push({ id: Date.now() + Math.random(), sub: p.k, task: `[시험대비] ${p.k} 복습`, target: p.min, done: false }); added++; }
+  });
+  save(); renderAll();
+  toast(added ? `📝 시험대비 목표 ${added}개를 추가했어요` : '이미 오늘 목표에 들어 있어요');
+}
+
+/* ================= 홈 화면 추가 안내 / 설치형 앱 ================= */
+// [추가] claude.ai 안에서 열렸는지(클라우드·선생님 기능 가능), GitHub Pages 설치형 앱인지 구분
+const IS_PAGES = /github\.io$/.test(location.hostname) || location.protocol === 'file:' || location.hostname === 'localhost';
+const IN_CLAUDE = !IS_PAGES;
+const IS_STANDALONE = (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
+let installPrompt = null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault(); installPrompt = e;
+  document.getElementById('install-now').classList.remove('hidden');
+  if (!IS_STANDALONE) document.getElementById('install-banner').classList.remove('hidden');
+});
+window.addEventListener('appinstalled', () => { installPrompt = null; hideInstallBanner(); toast('🌳 설치 완료! 홈 화면에서 예현이의 숲을 열어 주세요'); });
+async function installNow() {
+  if (!installPrompt) return;
+  installPrompt.prompt();
+  try { const r = await installPrompt.userChoice; if (r && r.outcome === 'accepted') closeModal(); } catch (e) { }
+  installPrompt = null; document.getElementById('install-now').classList.add('hidden');
+}
+if ('serviceWorker' in navigator && !IN_CLAUDE && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+  window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(() => { }); });
+}
+function openInstall() {
+  try { localStorage.setItem('yh-install-seen', '1'); } catch (e) { }
+  document.getElementById('install-banner').classList.add('hidden');
+  document.getElementById('install-app-link').classList.toggle('hidden', !IN_CLAUDE);
+  openModal('install');
+}
+function hideInstallBanner() { try { localStorage.setItem('yh-install-seen', '1'); } catch (e) { } document.getElementById('install-banner').classList.add('hidden'); }
+
+/* ================= 렌더링: 타이머 화면 ================= */
+function renderTree() {
+  const c = state.forest.cur, sp = SPECIES[c.sp], d = c.days.length, si = stageIdx(d), nxt = STAGES[si + 1];
+  document.getElementById('level-name').textContent = `🌳 ${sp.n} · ${STAGES[si].n}`;
+  document.getElementById('level-next').textContent = `🍃 잎 ${c.leaves}장`;
+  document.getElementById('level-sub').textContent = `${TREE_DAYS}일 중 ${d}일 달성${nxt ? ` · ${nxt.n}까지 ${nxt.d - d}일` : ''}${state.forest.trees.length ? ` · 숲에 ${state.forest.trees.length}그루` : ''}`;
+  document.getElementById('exp-bar').style.width = `${Math.round(d / TREE_DAYS * 100)}%`;
+  document.getElementById('tree').innerHTML = treeSVG(c.sp, d, c.leaves);
+  const st = achStreak(), na = nextAnimal(), ds = daysSinceAch();
+  let extra = '';
+  if (isThirsty()) extra = `💧 나무가 목말라요! 목표 하나만 달성하면 바로 싱싱해지고 친구들이 돌아와요`;
+  else if (ds === 2) extra = `⚠️ 오늘 달성하지 않으면 내일 나무가 목말라져요`;
+  else extra = `🔥 연속 달성 ${st}일${na ? ` · 다음 친구 ${na.e} ${na.k}까지 ${na.n - st}일` : ' · 모든 친구가 모였어요!'}`;
+  document.getElementById('level-sub').textContent += `\n${extra}`;
+  document.getElementById('level-sub').style.whiteSpace = 'pre-line';
+  renderAnimals();
+}
+
+function subjectChips(containerId, selected, onPick, small) {
+  const c = document.getElementById(containerId);
+  c.innerHTML = '';
+  SUBJECTS.forEach(s => {
+    const b = document.createElement('button');
+    b.className = `chip border-2 border-green-100 rounded-xl ${small ? 'py-1.5 text-xs' : 'py-2.5 text-sm'} bg-white text-gray-600 ${s.k === selected ? 'on' : ''}`;
+    b.textContent = `${s.e} ${s.k}`;
+    b.onclick = () => onPick(s.k);
+    c.appendChild(b);
+  });
+}
+
+function goalForStart() {
+  if (state.mode === 'auto') return autoInfo(state.subject).goal;
+  if (state.mode === 'cycle') return state.cycle.goal;
+  return state.freeGoal;
+}
+
+function renderSetup() {
+  subjectChips('subject-chips', state.subject, k => { state.subject = k; save(); renderSetup(); });
+  document.querySelectorAll('#setup .seg button').forEach(b => {
+    b.classList.toggle('on', b.dataset.mode === state.mode);
+    b.onclick = () => { state.mode = b.dataset.mode; save(); renderSetup(); };
+  });
+  const p = document.getElementById('mode-panel');
+  if (state.mode === 'auto') {
+    const a = autoInfo(state.subject);
+    const dots = [0, 1, 2].map(i => `<span class="w-7 h-7 rounded-full flex items-center justify-center text-sm ${i < a.streak ? 'bg-green-400 text-white' : 'bg-green-50 text-green-200'}">${i < a.streak ? '✓' : i + 1}</span>`).join('');
+    let note = '3일 연속 성공하면 다음 날부터 <b class="text-green-600">+5분</b> 자동 레벨업!';
+    if (a.next) note = `🎉 3일 연속 성공! <b class="text-green-600">내일부터 ${a.next}분</b>으로 올라가요`;
+    else if (a.doneToday) note = `오늘 ${state.subject} 목표 완료! 내일도 성공하면 연속 ${a.streak + 1}일째`;
+    p.innerHTML = `
+      <div class="flex items-center justify-between">
+        <div><p class="text-xs text-gray-400 font-sans">오늘의 ${esc(state.subject)} 목표</p><p class="text-3xl text-green-600">${a.goal}<span class="text-lg text-gray-400"> 분</span></p></div>
+        <div class="text-right"><p class="text-[11px] text-gray-400 font-sans mb-1">연속 성공</p><div class="flex gap-1">${dots}</div></div>
+      </div>
+      <p class="text-xs text-gray-500 font-sans mt-2 bg-green-50/60 rounded-lg px-2 py-1.5">${note}</p>
+      <p class="text-[11px] text-gray-400 font-sans mt-1.5">과목마다 따로 성장해요. 하루라도 쉬면 연속 기록은 처음부터!</p>`;
+  } else if (state.mode === 'free') {
+    const pres = [15, 25, 30, 45, 60, 90];
+    p.innerHTML = `
+      <p class="text-xs text-gray-400 font-sans mb-2">오늘 컨디션에 맞게 정해요</p>
+      <div class="flex items-center gap-2">
+        <button onclick="bumpFree(-5)" class="w-11 h-11 rounded-xl bg-green-50 text-green-600 text-xl">−</button>
+        <input id="free-input" type="number" min="1" max="300" value="${state.freeGoal}" class="flex-1 p-2.5 rounded-xl bg-green-50 text-2xl text-center text-green-600 outline-none" style="font-family:ui-rounded,system-ui">
+        <button onclick="bumpFree(5)" class="w-11 h-11 rounded-xl bg-green-50 text-green-600 text-xl">+</button>
+        <span class="text-gray-400">분</span>
+      </div>
+      <div class="grid grid-cols-6 gap-1 mt-2">${pres.map(m => `<button onclick="setFree(${m})" class="chip border border-green-100 rounded-lg py-1.5 text-xs ${m === state.freeGoal ? 'on' : 'text-gray-500'}">${m}</button>`).join('')}</div>`;
+    document.getElementById('free-input').onchange = e => setFree(e.target.value);
+  } else if (state.mode === 'sw') {
+    const todaySub = (state.daily[today()] || {})[state.subject] || 0;
+    p.innerHTML = `
+      <p class="text-xs text-gray-400 font-sans">목표 없이 켜두고, 공부한 만큼 그대로 쌓는 <b class="text-green-600">순공 측정</b></p>
+      <div class="flex items-center justify-between mt-2 bg-green-50/60 rounded-xl px-3 py-2.5">
+        <span class="text-sm text-gray-600">오늘 ${esc(state.subject)} 순공</span>
+        <span class="text-2xl text-green-600">${fmtMin(todaySub)}</span>
+      </div>
+      <p class="text-[11px] text-gray-500 font-sans mt-2">🍃 ${SW_FLOWER}분 이상 공부하면 잎이 돋고 나무가 자라요<br>🌱 ${SW_FLOWER}분 미만은 시간만 기록돼요</p>`;
+  } else {
+    const c = state.cycle;
+    const row = (label, key, opts, unit) => `<div class="flex items-center gap-2 mt-2"><span class="w-16 text-xs text-gray-500 font-sans">${label}</span>
+      <div class="flex gap-1 flex-1">${opts.map(v => `<button onclick="setCycle('${key}',${v})" class="chip flex-1 border border-green-100 rounded-lg py-1.5 text-xs ${c[key] === v ? 'on' : 'text-gray-500'}">${v}${unit}</button>`).join('')}</div></div>`;
+    p.innerHTML = `
+      <p class="text-xs text-gray-400 font-sans">짧게 여러 번! 집중 → 휴식 → 집중…</p>
+      ${row('한 세트', 'goal', [20, 25, 30, 45, 50], '분')}
+      ${row('세트 수', 'sets', [2, 3, 4, 5, 6], '회')}
+      ${row('휴식', 'brk', [5, 10, 15], '분')}
+      <p class="text-sm text-green-600 mt-3 text-center">${c.goal}분 × ${c.sets}세트 = 총 ${fmtMin(c.goal * c.sets)} 집중</p>`;
+  }
+  const g = goalForStart();
+  document.getElementById('start-btn').textContent = state.mode === 'cycle' ? `🚀 ${state.cycle.sets}세트 시작하기` : state.mode === 'sw' ? '⏱ 순공 측정 시작' : `🚀 ${g}분 집중 시작하기`;
+  renderDdayStrip();
+  renderRecommend();
+  renderExamCard();
+}
+
+/* ================= D-Day ================= */
+const DDAY_TYPES = [
+  { k: 'mid', e: '📝', n: '중간고사' }, { k: 'final', e: '📝', n: '기말고사' }, { k: 'mock', e: '📊', n: '모의고사' },
+  { k: 'suneung', e: '🎯', n: '수능' }, { k: 'perf', e: '🎤', n: '수행평가' }, { k: 'etc', e: '📌', n: '기타' },
+];
+const DT = Object.fromEntries(DDAY_TYPES.map(t => [t.k, t]));
+function ddayDiff(date) { const [y, m, d] = date.split('-').map(Number), [ty, tm, td] = today().split('-').map(Number); return Math.round((new Date(y, m - 1, d) - new Date(ty, tm - 1, td)) / 86400000); }
+function ddayLabel(n) { return n > 0 ? `D-${n}` : n === 0 ? 'D-DAY' : `D+${-n}`; }
+function upcomingDdays() { return state.ddays.filter(x => ddayDiff(x.date) >= 0).sort((a, b) => a.date.localeCompare(b.date)); }
+function renderDdayStrip() {
+  const el = document.getElementById('dday-strip');
+  const list = upcomingDdays();
+  el.innerHTML = list.map((x, i) => {
+    const n = ddayDiff(x.date), t = DT[x.type] || DT.etc, hot = n <= 7;
+    return `<button onclick="openDday()" class="shrink-0 flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm border-2 ${i === 0 ? (hot ? 'bg-red-50 border-red-200 text-red-500' : 'bg-green-50 border-green-200 text-green-600') : 'bg-white border-green-100 text-gray-500'}">
+      <span>${t.e}</span><span class="font-sans text-xs">${esc(x.name)}</span><b>${ddayLabel(n)}</b></button>`;
+  }).join('') + `<button onclick="openDday()" class="shrink-0 rounded-full px-3 py-1.5 text-xs border-2 border-dashed border-green-200 text-green-400">＋ D-Day</button>`;
+}
+let ddayType = 'final', ddaySubs = SUBJECTS.map(x => x.k);
+function openDday() {
+  if (state.active) return;
+  renderDdayModal();
+  document.getElementById('dday-date').value = '';
+  openModal('dday');
+}
+function renderDdayModal() {
+  const tbox = document.getElementById('dday-types');
+  tbox.innerHTML = '';
+  DDAY_TYPES.forEach(t => {
+    const b = document.createElement('button');
+    b.className = `chip border-2 border-green-100 rounded-xl py-1.5 text-xs bg-white text-gray-600 ${t.k === ddayType ? 'on' : ''}`;
+    b.textContent = `${t.e} ${t.n}`;
+    b.onclick = () => { ddayType = t.k; document.getElementById('dday-name').value = t.n; renderDdayModal(); };
+    tbox.appendChild(b);
+  });
+  const nm = document.getElementById('dday-name'); if (!nm.value) nm.value = DT[ddayType].n;
+  const isExam = EXAM_TYPES.includes(ddayType);
+  document.getElementById('dday-subs-wrap').classList.toggle('hidden', !isExam);
+  const sb = document.getElementById('dday-subs'); sb.innerHTML = '';
+  SUBJECTS.forEach(x => {
+    const b = document.createElement('button');
+    b.className = `chip border border-green-100 rounded-lg py-1 text-[11px] bg-white text-gray-600 ${ddaySubs.includes(x.k) ? 'on' : ''}`;
+    b.textContent = `${x.e} ${x.k}`;
+    b.onclick = () => { ddaySubs = ddaySubs.includes(x.k) ? ddaySubs.filter(y => y !== x.k) : [...ddaySubs, x.k]; renderDdayModal(); };
+    sb.appendChild(b);
+  });
+  const list = state.ddays.slice().sort((a, b) => a.date.localeCompare(b.date));
+  const box = document.getElementById('dday-list');
+  box.innerHTML = list.length ? '' : '<p class="text-center text-gray-400 py-2">아직 등록된 D-Day가 없어요</p>';
+  list.forEach(x => {
+    const n = ddayDiff(x.date), t = DT[x.type] || DT.etc;
+    const row = document.createElement('div');
+    row.className = `flex items-center gap-2 rounded-xl px-3 py-2 ${n < 0 ? 'bg-gray-50 text-gray-400' : 'bg-white border border-green-100'}`;
+    row.innerHTML = `<span>${t.e}</span><div class="flex-1 min-w-0"><p class="truncate">${esc(x.name)}</p><p class="text-[11px] text-gray-400">${x.date.replace(/-/g, '.')} (${dow(x.date)})${x.subs && x.subs.length && x.subs.length < 6 ? ' · ' + x.subs.join('·') : ''}</p></div><b class="font-jua ${n >= 0 && n <= 7 ? 'text-red-400' : 'text-green-600'}">${ddayLabel(n)}</b>`;
+    const del = document.createElement('button'); del.className = 'text-gray-300 px-1'; del.textContent = '✕';
+    del.onclick = () => { state.ddays = state.ddays.filter(y => y.id !== x.id); save(); renderDdayModal(); renderAll(); };
+    row.appendChild(del); box.appendChild(row);
+  });
+}
+function addDday() {
+  const name = document.getElementById('dday-name').value.trim() || DT[ddayType].n;
+  const date = document.getElementById('dday-date').value;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) { toast('날짜를 골라주세요 📅'); return; }
+  state.ddays.push({ id: Date.now(), type: ddayType, name, date, subs: EXAM_TYPES.includes(ddayType) ? ddaySubs.slice() : [] });
+  document.getElementById('dday-name').value = ''; document.getElementById('dday-date').value = '';
+  save(); renderDdayModal(); renderAll(); toast(`📅 ${name} ${ddayLabel(ddayDiff(date))} 추가!`);
+}
+function bumpFree(d) { setFree(state.freeGoal + d); }
+function setFree(v) { v = Math.max(1, Math.min(300, parseInt(v) || 30)); state.freeGoal = v; save(); renderSetup(); }
+function setCycle(k, v) { state.cycle[k] = v; save(); renderSetup(); }
+
+function renderHeader() {
+  const t = dayTotal(today()), st = currentStreak(), ex = examInfo();
+  if (ex) { document.getElementById('header-sub').textContent = `📝 ${ex.name} ${ddayLabel(ddayDiff(ex.date))} · 오늘 ${fmtMin(t)}`; return; }
+  document.getElementById('header-sub').textContent = t > 0
+    ? `오늘 ${fmtMin(t)} 집중했어요${st >= 2 ? ` · 🔥 ${st}일 연속` : ''}`
+    : (st >= 1 ? `🔥 ${st}일 연속 공부 중! 오늘도 이어가자` : '오늘도 숲을 키워볼까? 🌱');
+}
+
+/* ================= 타이머 & 스톱워치 ================= */
+let tickId = null, restTimer = null, wakeLock = null, audioCtx = null;
+const speed = () => state.settings.test ? 100 : 1;
+const SW_FLOWER = 25;   // 스톱워치: 25분 이상이면 꽃(성공) 인정
+
+function startSession(setNo) {
+  if (state.active) return;
+  try { audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)(); audioCtx.resume && audioCtx.resume(); } catch (e) { }
+  const sp = speed(), now = Date.now();
+  if (state.mode === 'sw') {
+    state.active = { sw: true, sub: state.subject, mode: 'sw', sp, acc: 0, runFrom: now, beat: now, paused: false, leaves: 0, startAt: now };
+  } else {
+    const minutes = goalForStart();
+    const dur = minutes * 60000 / sp;
+    state.active = {
+      sub: state.subject, min: minutes, mode: state.mode, sp,
+      set: state.mode === 'cycle' ? (setNo || 1) : 0, sets: state.mode === 'cycle' ? state.cycle.sets : 0,
+      dur, endAt: now + dur, paused: null, leaves: 0, startAt: now,
+    };
+  }
+  save();
+  showRunning();
+}
+function leftMs() { const a = state.active; return a.paused != null ? a.paused : Math.max(0, a.endAt - Date.now()); }
+function swElapsed() { const a = state.active; return a.acc + (a.paused ? 0 : Date.now() - a.runFrom); }
+
+function showRunning() {
+  const a = state.active;
+  ['setup', 'level-card', 'dday-strip'].forEach(id => document.getElementById(id).classList.add('hidden'));
+  document.getElementById('resting').classList.add('hidden'); document.getElementById('resting').classList.remove('flex');
+  const r = document.getElementById('running'); r.classList.remove('hidden'); r.classList.add('flex');
+  document.getElementById('start-btn').classList.add('hidden');
+  document.getElementById('skip-rest-btn').classList.add('hidden');
+  const gb = document.getElementById('giveup-btn');
+  gb.classList.remove('hidden');
+  if (a.sw) { gb.textContent = '⏹ 공부 끝내기 (기록 저장)'; gb.className = 'w-full bg-green-500 text-white text-lg py-3.5 rounded-2xl shadow-md'; }
+  else { gb.textContent = '포기하기 ㅠㅠ'; gb.className = 'w-full bg-gray-100 text-gray-500 text-lg py-3.5 rounded-2xl'; }
+  document.getElementById('char-wrap').style.height = '7rem';
+  const ch = document.getElementById('tree-box'); ch.style.width = ch.style.height = '7rem';
+  ['exam-card', 'install-banner'].forEach(id => document.getElementById(id).classList.add('hidden'));
+  document.getElementById('run-label').textContent = `${SUB[a.sub].e} ${a.sub} ${a.sw ? '순공 측정 중 ⏱' : '집중 중 🔥'}`;
+  const rs = document.getElementById('run-set');
+  if (a.sw) { rs.textContent = `${SW_FLOWER}분을 넘기면 잎이 돋아요 🍃`; rs.classList.remove('hidden'); }
+  else if (a.sets) { rs.textContent = `${a.set} / ${a.sets} 세트`; rs.classList.remove('hidden'); }
+  else rs.classList.add('hidden');
+  document.getElementById('run-warn').textContent = state.settings.strict
+    ? (a.sw ? '🚨 강력 모드: 화면을 벗어나면 측정이 그 자리에서 끝나요' : '🚨 강력 모드: 화면을 벗어나면 잎이 떨어져요 (화면 잠금 포함)')
+    : '⏸ 부드러운 모드: 화면을 벗어나면 시간이 멈춰요';
+  requestWake();
+  clearInterval(tickId);
+  tick.lastStage = -1;
+  tick();
+  tickId = setInterval(tick, 250);
+}
+function clockText(sec) {
+  return sec >= 3600 ? `${Math.floor(sec / 3600)}:${pad(Math.floor(sec % 3600 / 60))}:${pad(sec % 60)}` : `${pad(Math.floor(sec / 60))}:${pad(sec % 60)}`;
+}
+function tick() {
+  const a = state.active; if (!a) return;
+  let prog;
+  if (a.sw) {
+    const el = swElapsed();
+    document.getElementById('time-left').textContent = clockText(Math.floor(el * a.sp / 1000));
+    prog = Math.min(1, el * a.sp / (SW_FLOWER * 60000));
+    document.getElementById('ring').style.strokeDashoffset = 282.7 * (1 - prog);
+    // 10초마다 이 기기에 '살아있음' 기록 (앱이 갑자기 닫혀도 그때까지 시간 보존)
+    if (!a.paused && Date.now() - a.beat > 10000) { a.beat = Date.now(); saveLocal(); }
+  } else {
+    const left = leftMs();
+    document.getElementById('time-left').textContent = clockText(Math.ceil(left * a.sp / 1000));
+    prog = 1 - left / a.dur;
+    document.getElementById('ring').style.strokeDashoffset = 282.7 * prog;
+    if (left <= 0 && a.paused == null) { onSuccess(); return; }
+  }
+  const stage = Math.floor(prog * 40);
+  if (stage !== tick.lastStage) { tick.lastStage = stage; document.getElementById('plant').innerHTML = sproutSVG(prog); }
+}
+function resetTimerUI() {
+  clearInterval(tickId); tickId = null; tick.lastStage = -1;
+  releaseWake();
+  ['setup', 'level-card', 'dday-strip'].forEach(id => document.getElementById(id).classList.remove('hidden'));
+  const r = document.getElementById('running'); r.classList.add('hidden'); r.classList.remove('flex');
+  document.getElementById('start-btn').classList.remove('hidden');
+  document.getElementById('giveup-btn').classList.add('hidden');
+  document.getElementById('char-wrap').style.height = '';
+  const ch = document.getElementById('tree-box'); ch.style.width = ch.style.height = '';
+  renderExamCard();
+}
+
+async function requestWake() { try { if ('wakeLock' in navigator) wakeLock = await navigator.wakeLock.request('screen'); } catch (e) { } }
+function releaseWake() { try { wakeLock && wakeLock.release(); } catch (e) { } wakeLock = null; }
+
+function addStudy(sub, min) {
+  const d = today();
+  state.daily[d] = state.daily[d] || {};
+  state.daily[d][sub] = (state.daily[d][sub] || 0) + min;
+}
+function logSession(a, min, ok, why, flower) {
+  const now = new Date();
+  state.sessions.push({ d: ds(now), t: `${pad(now.getHours())}:${pad(now.getMinutes())}`, e: now.getTime(), sub: a.sub, min, ok, why: why || '', mode: a.mode, fl: !!flower });
+}
+
+// 성공 공통 처리 → 모달에 띄울 추가 메시지 목록 반환
+function completeStudy(a, minutes, flower) {
+  let ev = null, wasThirsty = isThirsty(), newAnimals = [];
+  if (flower) { state.totalSuccess++; ev = addLeaf(state.forest, today()); newAnimals = checkAnimals(); }
+  addStudy(a.sub, minutes);
+  logSession(a, minutes, true, '', flower);
+  const extras = [];
+  if (a.mode === 'auto') {
+    const au = state.auto[a.sub], t = today();
+    if (au.last !== t) {
+      au.streak = (au.last === addDays(t, -1)) ? au.streak + 1 : 1;
+      au.last = t;
+      if (au.streak >= 3 && !au.next) {
+        au.next = Math.min(180, au.goal + 5); au.nextFrom = addDays(t, 1); au.streak = 0;
+        extras.push(`<p class="text-emerald-600 bg-emerald-50 rounded-xl py-2">🌱 3일 연속 성공! 내일부터 ${a.sub} 목표가 <b>${au.next}분</b>으로 올라가요</p>`);
+      } else if (!au.next) extras.push(`<p class="text-green-600 bg-green-50 rounded-xl py-2">🔥 ${a.sub} 연속 ${au.streak}일째! (${3 - au.streak}일 더 하면 +5분)</p>`);
+    }
+  }
+  const studied = (state.daily[today()] || {})[a.sub] || 0;
+  const done = todayTodos().filter(t => !t.done && t.sub === a.sub && t.target > 0 && studied >= t.target);
+  done.forEach(t => t.done = true);
+  if (done.length) extras.push(`<p class="text-emerald-600 bg-emerald-50 rounded-xl py-2">✅ 오늘 목표 '${esc(done[0].task)}'${done.length > 1 ? ` 외 ${done.length - 1}개` : ''} 자동 체크!</p>`);
+  if (ev) {
+    const f = state.forest, c = f.cur;
+    if (ev.done != null) extras.unshift(`<p class="text-green-800 bg-green-100 rounded-xl py-2.5">🎉 <b>${SPECIES[ev.done].n} 완성!</b> 나의 숲에 큰 나무가 심어졌어요 (총 ${f.trees.length}그루)<br><span class="text-xs">다음은 ${SPECIES[c.sp].n} 씨앗을 심어요 🌰</span></p>`);
+    else if (ev.stageUp) extras.unshift(`<p class="text-green-700 bg-green-50 rounded-xl py-2">🌿 ${SPECIES[c.sp].n}가 '${ev.stageUp}'(으)로 자랐어요! (${c.days.length}/${TREE_DAYS}일)</p>`);
+    else if (ev.newDay) extras.unshift(`<p class="text-green-700 bg-green-50 rounded-xl py-2">🌳 오늘 달성! ${SPECIES[c.sp].n}가 하루 더 자랐어요 (${c.days.length}/${TREE_DAYS}일)</p>`);
+    if (wasThirsty) extras.unshift(`<p class="text-sky-700 bg-sky-50 rounded-xl py-2">💧 나무가 물을 마시고 다시 싱싱해졌어요!${Object.keys(state.animals).length ? ' 숨었던 친구들도 돌아왔어요' : ''}</p>`);
+    newAnimals.forEach(a => extras.unshift(`<p class="text-amber-700 bg-amber-50 rounded-xl py-2.5"><span class="text-2xl">${a.e}</span> <b>${a.k}</b>가 숲에 놀러 왔어요! (${a.n}일 연속 달성)</p>`));
+  }
+  checkBadges().forEach(b => extras.push(`<p class="text-amber-600 bg-amber-50 rounded-xl py-2">🏅 새 배지: ${b.icon} ${b.name}</p>`));
+  save();
+  renderAll();
+  extras.ev = ev;
+  return extras;
+}
+function showSuccessModal({ icon, title, sub, extras, btns }) {
+  const msgs = state.settings.messages;
+  document.getElementById('s-flower').textContent = icon;
+  document.getElementById('s-title').textContent = title;
+  document.getElementById('s-sub').textContent = sub;
+  document.getElementById('s-msg').textContent = `${msgs[Math.floor(Math.random() * msgs.length)]}\n\n- ${state.settings.teacher} -`;
+  document.getElementById('s-extra').innerHTML = extras.join('');
+  const box = document.getElementById('s-btns'); box.innerHTML = '';
+  btns.forEach(([label, cls, fn]) => { const b = document.createElement('button'); b.className = cls; b.textContent = label; b.onclick = fn; box.appendChild(b); });
+  openModal('success');
+  if (state.settings.sound) { chime(); try { navigator.vibrate && navigator.vibrate([80, 60, 80]); } catch (e) { } }
+}
+const BTN_MAIN = 'w-full bg-green-500 text-white py-3 rounded-xl text-lg';
+const BTN_REST = 'w-full bg-sky-50 text-sky-500 py-2.5 rounded-xl';
+
+function onSuccess() {
+  const a = state.active; if (!a) return;
+  state.active = null;
+  resetTimerUI();
+  const extras = completeStudy(a, a.min, true);
+  const brk = a.mode === 'cycle' ? state.cycle.brk : 5;
+  const btns = (a.sets && a.set < a.sets)
+    ? [[`☕ ${brk}분 쉬고 ${a.set + 1}세트 하기`, 'w-full bg-sky-400 text-white py-3 rounded-xl text-lg', () => { closeModal(); startRest(brk, { sub: a.sub, set: a.set + 1 }); }],
+       ['오늘은 여기까지', 'w-full bg-gray-100 text-gray-500 py-2.5 rounded-xl', () => closeModal()]]
+    : [['확인', BTN_MAIN, () => closeModal()], [`☕ ${brk}분 쉬는 시간 갖기`, BTN_REST, () => { closeModal(); startRest(brk, null); }]];
+  showSuccessModal({ icon: extras.ev && extras.ev.done != null ? '🌳' : '🍃', title: '목표 달성!', sub: `${a.sub} ${a.min}분 집중 완료 · 잎 한 장이 돋았어요 (🍃 ${state.forest.cur.leaves || '숲으로!'})`, extras, btns });
+}
+
+function finishStopwatch(reason, elapsedOverride) {
+  const a = state.active; if (!a || !a.sw) return;
+  const el = elapsedOverride != null ? elapsedOverride : swElapsed();
+  state.active = null;
+  resetTimerUI();
+  const min = Math.floor(el * a.sp / 60000);
+  if (min < 1) { save(); renderAll(); toast(reason ? `${reason} (1분 미만이라 기록 안 됨)` : '1분 미만은 기록되지 않아요'); return; }
+  const flower = min >= SW_FLOWER;
+  const extras = completeStudy(a, min, flower);
+  if (reason) extras.unshift(`<p class="text-gray-500 bg-gray-50 rounded-xl py-2">⏸ ${esc(reason)}</p>`);
+  if (!flower) extras.push(`<p class="text-green-600 bg-green-50 rounded-xl py-2">🌱 다음엔 ${SW_FLOWER}분을 넘겨서 잎을 틔워보자!</p>`);
+  showSuccessModal({
+    icon: flower ? (extras.ev && extras.ev.done != null ? '🌳' : '🍃') : '🌱', title: flower ? '순공 기록 완료!' : '기록 완료!',
+    sub: `${a.sub} 순공 ${fmtMin(min)} 저장${flower ? ' · 잎 한 장이 돋았어요' : ''}`, extras,
+    btns: [['확인', BTN_MAIN, () => closeModal()], ['☕ 5분 쉬는 시간 갖기', BTN_REST, () => { closeModal(); startRest(5, null); }]],
+  });
+}
+
+function onFail(why) {
+  const a = state.active; if (!a) return;
+  if (a.sw) { finishStopwatch(why); return; }
+  state.active = null;
+  resetTimerUI();
+  state.totalFail++;
+  logSession(a, a.min, false, why, false);
+  save();
+  renderAll();
+  document.getElementById('f-reason').textContent = why;
+  openModal('fail');
+  try { state.settings.sound && navigator.vibrate && navigator.vibrate(300); } catch (e) { }
+}
+
+function askGiveUp() {
+  if (state.active && state.active.sw) { finishStopwatch(''); return; }
+  confirmBox('😢', '정말 포기할까요?', '지금 포기하면 잎이 떨어지고 시간은 기록되지 않아요.', '포기', '계속하기', () => onFail('스스로 포기했어요'));
+}
+
+/* 딴짓 감지 */
+document.addEventListener('visibilitychange', () => {
+  const a = state.active;
+  if (!a) return;
+  if (document.hidden) {
+    if (state.settings.strict) { onFail(a.sw ? '화면을 벗어나서 측정을 멈췄어요' : '공부 중에 화면을 벗어났어요'); return; }
+    if (a.sw) { if (!a.paused) { a.acc += Date.now() - a.runFrom; a.paused = true; a.leaves++; save(); } }
+    else if (a.paused == null) { a.paused = leftMs(); a.leaves++; save(); }
+  } else {
+    let resumed = false;
+    if (a.sw && a.paused) { a.runFrom = Date.now(); a.beat = Date.now(); a.paused = false; resumed = true; }
+    if (!a.sw && a.paused != null) { a.endAt = Date.now() + a.paused; a.paused = null; resumed = true; }
+    if (resumed) { save(); toast(`⏸ 시간이 멈춰 있었어요. 다시 집중! (자리 비움 ${a.leaves}회)`); requestWake(); }
+  }
+});
+
+/* 쉬는 시간 */
+function startRest(min, nextInfo) {
+  const end = Date.now() + min * 60000 / speed();
+  ['setup', 'level-card', 'dday-strip', 'exam-card'].forEach(id => document.getElementById(id).classList.add('hidden'));
+  const r = document.getElementById('resting'); r.classList.remove('hidden'); r.classList.add('flex');
+  document.getElementById('start-btn').classList.add('hidden');
+  const sk = document.getElementById('skip-rest-btn'); sk.classList.remove('hidden');
+  sk.textContent = nextInfo ? `휴식 끝내고 ${nextInfo.set}세트 바로 시작 ▶` : '휴식 끝내기';
+  document.getElementById('rest-next').textContent = nextInfo ? `휴식이 끝나면 ${nextInfo.sub} ${nextInfo.set}/${state.cycle.sets}세트가 자동으로 시작돼요` : '';
+  restTimer = { end, next: nextInfo, id: setInterval(() => {
+    const left = Math.max(0, restTimer.end - Date.now()), sec = Math.ceil(left * speed() / 1000);
+    document.getElementById('rest-left').textContent = `${pad(Math.floor(sec / 60))}:${pad(sec % 60)}`;
+    if (left <= 0) endRest(false);
+  }, 250) };
+}
+function endRest(skipped) {
+  if (!restTimer) return;
+  clearInterval(restTimer.id);
+  const nx = restTimer.next; restTimer = null;
+  const r = document.getElementById('resting'); r.classList.add('hidden'); r.classList.remove('flex');
+  document.getElementById('skip-rest-btn').classList.add('hidden');
+  if (nx) {
+    if (!skipped && document.hidden) { resetTimerUI(); toast('휴식 끝! 돌아오면 다음 세트를 시작하세요'); return; }
+    state.subject = nx.sub; state.mode = 'cycle';
+    if (state.settings.sound && !skipped) chime();
+    startSession(nx.set);
+  } else { resetTimerUI(); if (!skipped) { toast('☕ 휴식 끝! 다시 달려볼까?'); state.settings.sound && chime(); } }
+}
+
+function chime() {
+  try {
+    const ctx = audioCtx || (audioCtx = new (window.AudioContext || window.webkitAudioContext)());
+    [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => {
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = 'sine'; o.frequency.value = f;
+      const t = ctx.currentTime + i * .12;
+      g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.18, t + .02); g.gain.exponentialRampToValueAtTime(.001, t + .5);
+      o.connect(g); g.connect(ctx.destination); o.start(t); o.stop(t + .55);
+    });
+  } catch (e) { }
+}
+
+/* ================= 오늘 목표 ================= */
+let todoSub = '국어';
+function todayTodos() { const d = today(); state.todos[d] = state.todos[d] || []; return state.todos[d]; }
+function addTodo() {
+  const inp = document.getElementById('todo-task');
+  const task = inp.value.trim();
+  if (!task) { inp.focus(); toast('학습량을 적어주세요 ✏️'); return; }
+  const target = Math.max(0, Math.min(600, parseInt(document.getElementById('todo-min').value) || 0));
+  todayTodos().push({ id: Date.now(), sub: todoSub, task, target, done: false });
+  inp.value = '';
+  save(); renderTodos();
+}
+function toggleTodo(id) {
+  const t = todayTodos().find(x => x.id === id); if (!t) return;
+  t.done = !t.done;
+  if (t.done) { const nb = checkBadges(); nb.forEach(b => toast(`🏅 새 배지: ${b.icon} ${b.name}`)); }
+  save(); renderTodos(); renderStatsIfOpen();
+}
+function deleteTodo(id) { const d = today(); state.todos[d] = todayTodos().filter(x => x.id !== id); save(); renderTodos(); }
+function carryOver() {
+  const y = addDays(today(), -1);
+  const left = (state.todos[y] || []).filter(t => !t.done);
+  const list = todayTodos();
+  left.forEach(t => { if (!list.some(x => x.task === t.task && x.sub === t.sub)) list.push({ id: Date.now() + Math.random(), sub: t.sub, task: t.task, target: t.target, done: false }); });
+  save(); renderTodos(); toast(`↪ ${left.length}개를 가져왔어요`);
+}
+function renderTodos() {
+  renderWeekCard();
+  subjectChips('todo-subject-chips', todoSub, k => { todoSub = k; renderTodos(); }, true);
+  const d = today();
+  document.getElementById('todo-date').textContent = `${md(d)}`;
+  const list = todayTodos();
+  const doneN = list.filter(t => t.done).length;
+  const rate = list.length ? Math.round(doneN / list.length * 100) : 0;
+  document.getElementById('todo-bar').style.width = rate + '%';
+  document.getElementById('todo-rate').textContent = list.length ? `${doneN}/${list.length} · ${rate}%` : '0%';
+  const y = state.todos[addDays(d, -1)] || [];
+  document.getElementById('carry-btn').classList.toggle('hidden', !y.some(t => !t.done && !list.some(x => x.task === t.task && x.sub === t.sub)));
+  const ul = document.getElementById('todo-list');
+  ul.innerHTML = '';
+  if (!list.length) { ul.innerHTML = '<p class="text-center text-gray-400 text-sm mt-6">오늘 공부할 과목과 학습량을 정해볼까? 📝</p>'; return; }
+  const studied = state.daily[d] || {};
+  list.forEach(t => {
+    const s = SUB[t.sub] || SUBJECTS[0];
+    const li = document.createElement('li');
+    li.className = `flex items-center gap-3 p-3 rounded-2xl border-2 ${t.done ? 'bg-gray-50 border-gray-100' : 'bg-white border-green-100 shadow-sm'}`;
+    const cb = document.createElement('button');
+    cb.className = `w-7 h-7 rounded-full border-2 flex items-center justify-center shrink-0 ${t.done ? 'bg-emerald-400 border-emerald-400 text-white' : 'border-green-200 text-transparent'}`;
+    cb.textContent = '✓'; cb.onclick = () => toggleTodo(t.id);
+    const mid = document.createElement('div'); mid.className = 'flex-1 min-w-0';
+    const top = document.createElement('div'); top.className = `text-sm ${t.done ? 'line-through text-gray-400' : 'text-gray-700'}`;
+    const tag = document.createElement('b'); tag.style.color = s.c; tag.className = 'mr-1'; tag.textContent = `[${t.sub}]`;
+    top.appendChild(tag); top.appendChild(document.createTextNode(t.task));
+    mid.appendChild(top);
+    if (t.target > 0) {
+      const got = studied[t.sub] || 0, pct = Math.min(100, Math.round(got / t.target * 100));
+      const bar = document.createElement('div'); bar.className = 'flex items-center gap-2 mt-1.5';
+      bar.innerHTML = `<div class="flex-1 bg-gray-100 rounded-full h-1.5 overflow-hidden"><div class="h-1.5 rounded-full" style="width:${pct}%;background:${s.c}"></div></div><span class="text-[10px] text-gray-400">${got}/${t.target}분</span>`;
+      mid.appendChild(bar);
+    }
+    const del = document.createElement('button'); del.className = 'text-xs text-gray-300 px-1'; del.textContent = '✕'; del.onclick = () => deleteTodo(t.id);
+    li.append(cb, mid, del);
+    ul.appendChild(li);
+  });
+}
+
+/* ================= 달력 ================= */
+const calView = { y: new Date().getFullYear(), m: new Date().getMonth(), sel: today() };
+function moveMonth(d) { calView.m += d; if (calView.m < 0) { calView.m = 11; calView.y--; } if (calView.m > 11) { calView.m = 0; calView.y++; } renderCalendar(); }
+function heat(m) { return m <= 0 ? 'bg-white' : m < 60 ? 'bg-green-100' : m < 120 ? 'bg-green-200' : m < 180 ? 'bg-green-300' : 'bg-green-400 text-white'; }
+function renderCalendar() {
+  const { y, m } = calView;
+  document.getElementById('cal-title').textContent = `${y}년 ${m + 1}월`;
+  const g = document.getElementById('cal-grid'); g.innerHTML = '';
+  const first = new Date(y, m, 1).getDay(), days = new Date(y, m + 1, 0).getDate(), t = today();
+  for (let i = 0; i < first; i++) g.appendChild(document.createElement('div'));
+  let sum = 0, studiedDays = 0;
+  for (let i = 1; i <= days; i++) {
+    const d = `${y}-${pad(m + 1)}-${pad(i)}`, mins = dayTotal(d);
+    sum += mins; if (mins) studiedDays++;
+    const todos = state.todos[d] || [], allDone = todos.length && todos.every(x => x.done);
+    const c = document.createElement('button');
+    const stp = calStamps()[d];
+    c.className = `cal-day relative rounded-xl flex flex-col items-center justify-center border transition ${heat(mins)} ${d === calView.sel ? 'ring-2 ring-green-500 border-transparent' : d === t ? 'border-green-400 border-2' : 'border-gray-100'}`;
+    c.innerHTML = `<span class="text-xs leading-none">${i}${allDone ? '<span class="text-[8px]">✅</span>' : ''}</span>${mins ? `<span class="text-[9px] font-sans mt-0.5 leading-none">${fmtShort(mins)}</span>` : ''}${stp && STAMPS[stp] ? `<span class="absolute -top-1 -right-1 text-[11px]">${STAMPS[stp].e}</span>` : ''}`;
+    c.onclick = () => { calView.sel = d; renderCalendar(); };
+    g.appendChild(c);
+  }
+  document.getElementById('cal-month-sum').textContent = `이번 달 ${studiedDays}일 공부 · 총 ${fmtMin(sum)}${studiedDays ? ` · 공부한 날 평균 ${fmtMin(sum / studiedDays)}` : ''}`;
+  renderDayDetail();
+}
+function renderDayDetail() {
+  const d = calView.sel, o = state.daily[d] || {}, tot = dayTotal(d);
+  const sess = state.sessions.filter(s => s.d === d);
+  const todos = state.todos[d] || [];
+  let h = `<div class="flex justify-between items-center mb-3"><h3 class="text-green-600">${md(d)} 기록</h3><span class="text-sm text-gray-600">${tot ? fmtMin(tot) : '기록 없음'}</span></div>`;
+  if (tot) {
+    h += `<div class="flex h-3 rounded-full overflow-hidden mb-3">${SUBJECTS.filter(s => o[s.k]).map(s => `<div style="width:${o[s.k] / tot * 100}%;background:${s.c}"></div>`).join('')}</div>`;
+    h += `<div class="grid grid-cols-2 gap-1.5 font-sans text-xs mb-3">${SUBJECTS.filter(s => o[s.k]).map(s => `<div class="flex items-center gap-1.5 bg-gray-50 rounded-lg px-2 py-1.5"><span class="w-2.5 h-2.5 rounded-full" style="background:${s.c}"></span>${s.k}<b class="ml-auto">${fmtMin(o[s.k])}</b></div>`).join('')}</div>`;
+  }
+  const stp = calStamps()[d];
+  if (stp && STAMPS[stp]) h = h + `<div class="flex items-center gap-2 bg-amber-50 border-2 border-amber-200 rounded-xl px-3 py-2 mb-3"><span class="text-2xl">💮</span><span class="text-sm text-amber-700">${esc(state.settings.teacher)} 도장: <b>${STAMPS[stp].e} ${STAMPS[stp].t}</b></span></div>`;
+  h += timetableHTML(d);
+  if (sess.length) h += `<p class="text-xs text-gray-400 mb-1">집중 기록</p><div class="flex flex-col gap-1 font-sans text-xs mb-3">${sess.slice().reverse().map(s => `<div class="flex gap-2 items-center"><span>${s.ok ? (s.fl === false ? '🌱' : '🍃') : '🍂'}</span><span class="text-gray-400 w-10">${s.t}</span><span>${s.sub} ${s.min}분${s.mode === 'sw' ? ' ⏱' : ''}</span><span class="ml-auto ${s.ok ? 'text-emerald-500' : 'text-red-300'}">${s.ok ? (s.mode === 'sw' ? '순공' : '성공') : '실패'}</span></div>`).join('')}</div>`;
+  if (todos.length) h += `<p class="text-xs text-gray-400 mb-1">오늘의 목표 (${todos.filter(t => t.done).length}/${todos.length})</p><div class="flex flex-col gap-1 font-sans text-xs">${todos.map(t => `<div>${t.done ? '✅' : '⬜'} <b style="color:${(SUB[t.sub] || SUBJECTS[0]).c}">[${esc(t.sub)}]</b> ${esc(t.task)}</div>`).join('')}</div>`;
+  if (!tot && !sess.length && !todos.length) h += '<p class="text-sm text-gray-400 text-center py-2 font-sans">이 날은 기록이 없어요</p>';
+  document.getElementById('day-detail').innerHTML = h;
+}
+
+function calStamps() { return calStampsOverride || myStamps; }
+let calStampsOverride = null;
+// 타임테이블: 하루를 10분 칸으로 나눠 언제 무엇을 공부했는지 표시
+function timetableHTML(d) {
+  const [y, m, dd] = d.split('-').map(Number);
+  const dayStart = new Date(y, m - 1, dd).getTime(), dayEnd = dayStart + 86400000;
+  const cells = {};
+  state.sessions.forEach(s => {
+    if (!s.ok) return;
+    const e = s.e || new Date(`${s.d}T${s.t}:00`).getTime();
+    const st = e - s.min * 60000;
+    if (e <= dayStart || st >= dayEnd) return;
+    for (let t = Math.max(st, dayStart); t < Math.min(e, dayEnd); t += 60000) cells[Math.floor((t - dayStart) / 600000)] = s.sub;
+  });
+  const keys = Object.keys(cells).map(Number);
+  if (!keys.length) return '';
+  const h0 = Math.min(6, Math.floor(Math.min(...keys) / 6)), h1 = Math.max(23, Math.floor(Math.max(...keys) / 6));
+  let rows = '';
+  for (let h = h0; h <= h1; h++) {
+    let cs = '';
+    for (let i = 0; i < 6; i++) { const sub = cells[h * 6 + i]; cs += `<div class="h-2.5 ${i === 2 ? 'mr-px' : ''}" style="background:${sub ? SUB[sub].c : '#EDF5E8'}"></div>`; }
+    rows += `<div class="flex items-center gap-1"><span class="w-5 text-[9px] text-gray-400 text-right font-sans">${h}</span><div class="flex-1 grid grid-cols-6 gap-px rounded-sm overflow-hidden">${cs}</div></div>`;
+  }
+  return `<p class="text-xs text-gray-400 mb-1">🕒 타임테이블 <span class="text-[10px]">(한 칸 = 10분)</span></p><div class="flex flex-col gap-px mb-3 bg-white">${rows}</div>`;
+}
+
+/* ================= 통계 ================= */
+let statPeriod = 'week';
+function renderStats() {
+  document.querySelectorAll('#period-seg button').forEach(b => { b.classList.toggle('on', b.dataset.p === statPeriod); b.onclick = () => { statPeriod = b.dataset.p; renderStats(); }; });
+  const [from, to] = periodRange(statPeriod);
+  const totals = subjectTotals(from, to);
+  const sum = Object.values(totals).reduce((a, b) => a + b, 0);
+  const ses = state.sessions.filter(s => s.d >= from && s.d <= to);
+  const ok = ses.filter(s => s.ok).length, rate = ses.length ? Math.round(ok / ses.length * 100) : 0;
+  const days = Object.keys(state.daily).filter(d => d >= from && d <= to && dayTotal(d) > 0).length;
+  const tile = (icon, label, val, sub) => `<div class="card p-3"><p class="text-[11px] text-gray-400 font-sans">${icon} ${label}</p><p class="text-xl text-gray-700 mt-0.5">${val}</p>${sub ? `<p class="text-[10px] text-gray-400 font-sans">${sub}</p>` : ''}</div>`;
+  document.getElementById('stat-tiles').innerHTML =
+    tile('⏱', '총 공부시간', fmtMin(sum), days ? `하루 평균 ${fmtMin(sum / days)}` : '') +
+    tile('🎯', '집중 성공률', ses.length ? rate + '%' : '-', `성공 ${ok} · 실패 ${ses.length - ok}`) +
+    tile('🔥', '연속 공부', `${currentStreak()}일`, `최고 기록 ${bestStreak()}일`) +
+    tile('📅', '공부한 날', `${days}일`, `${from.slice(5).replace('-', '/')} ~ ${to.slice(5).replace('-', '/')}`);
+
+  const max = Math.max(...Object.values(totals), 1);
+  const bars = SUBJECTS.slice().sort((a, b) => totals[b.k] - totals[a.k]);
+  document.getElementById('subject-bars').innerHTML = sum === 0
+    ? '<p class="text-center text-gray-400 text-sm py-3">이 기간에는 아직 기록이 없어요!</p>'
+    : bars.map((s, i) => `<div>
+        <div class="flex justify-between text-sm mb-1"><span>${i === 0 && totals[s.k] ? '👑 ' : ''}${s.e} ${s.k}</span><span><b style="color:${s.c}">${fmtMin(totals[s.k])}</b> <span class="text-gray-400 text-xs">${Math.round(totals[s.k] / sum * 100)}%</span></span></div>
+        <div class="w-full bg-gray-100 rounded-full h-3 overflow-hidden"><div class="h-3 rounded-full transition-all duration-700" style="width:${totals[s.k] / max * 100}%;background:${s.c}"></div></div>
+      </div>`).join('') + (() => {
+        const zero = SUBJECTS.filter(s => !totals[s.k]).map(s => s.k);
+        return zero.length ? `<p class="text-xs text-amber-600 bg-amber-50 rounded-lg px-2 py-1.5">💡 ${zero.join(', ')}은(는) 이 기간에 공부 기록이 없어요. 골고루 챙겨볼까?</p>` : '';
+      })();
+
+  // 최근 7일 막대
+  const t = today();
+  const week = [...Array(7)].map((_, i) => addDays(t, i - 6));
+  const wmax = Math.max(...week.map(dayTotal), 60);
+  document.getElementById('week-chart').innerHTML = week.map(d => {
+    const o = state.daily[d] || {}, tot = dayTotal(d);
+    const segs = SUBJECTS.filter(s => o[s.k]).map(s => `<div style="height:${o[s.k] / wmax * 100}%;background:${s.c}"></div>`).join('');
+    return `<div class="flex-1 flex flex-col items-center h-full">
+      <span class="text-[9px] text-gray-500 font-sans h-3">${tot ? fmtShort(tot) : ''}</span>
+      <div class="w-full flex-1 flex flex-col-reverse rounded-lg overflow-hidden bg-green-50/50">${segs}</div>
+      <span class="text-[10px] mt-1 ${d === t ? 'text-green-600' : 'text-gray-400'}">${d === t ? '오늘' : dow(d)}</span></div>`;
+  }).join('');
+  document.getElementById('week-legend').innerHTML = SUBJECTS.map(s => `<span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-sm" style="background:${s.c}"></span>${s.k}</span>`).join('');
+
+  renderForest();
+
+  // 배지
+  checkBadges();
+  document.getElementById('badges').innerHTML = BADGES.map(b => {
+    const got = state.badges[b.id];
+    return `<div class="rounded-2xl p-2 text-center border-2 ${got ? 'border-amber-200 bg-amber-50' : 'border-gray-100 bg-gray-50 opacity-60'}">
+      <div class="text-3xl ${got ? '' : 'grayscale'}">${got ? b.icon : '🔒'}</div>
+      <p class="text-xs mt-1 ${got ? 'text-gray-700' : 'text-gray-400'}">${b.name}</p>
+      <p class="text-[10px] text-gray-400 font-sans">${got ? got.slice(5).replace('-', '/') : b.desc}</p></div>`;
+  }).join('');
+}
+function renderForest() {
+  const f = state.forest, c = f.cur, sp = SPECIES[c.sp];
+  const totalLeaves = f.trees.reduce((a, t) => a + t.leaves, 0) + c.leaves;
+  document.getElementById('forest-count').textContent = `🌳 ${f.trees.length}그루 · 🍃 총 ${totalLeaves}장`;
+  const many = f.trees.length > 10;
+  const w = many ? 'w-[58px] h-[70px]' : 'w-[76px] h-[92px]';
+  let h = f.trees.map((t, i) => `<div class="${w} -mx-2 -mb-4 anim-pop" style="animation-delay:${Math.min(i, 20) * 40}ms" title="${SPECIES[t.sp].n} · ${t.done} 완성 · 잎 ${t.leaves}장">${treeSVG(t.sp, TREE_DAYS, t.leaves, { ground: false, viewBox: '10 10 180 180', maxLeaves: 90 })}</div>`).join('');
+  h += `<div class="${f.trees.length ? w : 'w-36 h-36'} -mx-1 -mb-4 relative" title="${sp.n} 키우는 중">${treeSVG(c.sp, c.days.length, c.leaves, { ground: false, viewBox: '10 10 180 180' })}<span class="absolute -top-1 left-1/2 -translate-x-1/2 whitespace-nowrap text-[9px] bg-white/90 text-green-700 rounded-full px-1.5 font-sans">자라는 중</span></div>`;
+  if (!isThirsty()) h += ANIMALS.filter(a => state.animals[a.k]).map(a => `<span class="text-2xl -mb-3 mx-0.5 anim-float" title="${a.k}">${a.e}</span>`).join('');
+  document.getElementById('forest-trees').innerHTML = h;
+  document.getElementById('animal-dex').innerHTML = ANIMALS.map(a => {
+    const got = state.animals[a.k];
+    return `<div class="rounded-xl py-1.5 text-center border-2 ${got ? 'border-amber-200 bg-amber-50' : 'border-gray-100 bg-gray-50'}"><div class="text-2xl ${got ? '' : 'grayscale opacity-30'}">${a.e}</div><p class="text-[10px] ${got ? 'text-gray-700' : 'text-gray-400'}">${got ? a.k : '???'}</p><p class="text-[9px] text-gray-400 font-sans">${got ? (isThirsty() ? '숨었어요' : '함께해요') : `${a.n}일 연속`}</p></div>`;
+  }).join('');
+  document.getElementById('forest-note').textContent = f.trees.length
+    ? `지금 ${sp.n}를 키우는 중이에요 (${c.days.length}/${TREE_DAYS}일). 목표를 달성한 날이 30일 모이면 숲에 한 그루가 더 심어져요.`
+    : `목표를 달성할 때마다 잎이 한 장씩 돋아요. 달성한 날이 ${TREE_DAYS}일 모이면 첫 번째 큰 나무가 숲에 심어져요!`;
+  const grown = {}; f.trees.forEach(t => grown[t.sp] = (grown[t.sp] || 0) + 1);
+  document.getElementById('dex').innerHTML = SPECIES.map((x, i) => {
+    const n = grown[i] || 0, cur = i === c.sp;
+    return `<div class="rounded-xl p-1 text-center border-2 ${n ? 'border-green-200 bg-green-50' : cur ? 'border-lime-300 bg-lime-50' : 'border-gray-100 bg-gray-50'}" title="${x.desc}">
+      <div class="h-12 ${n || cur ? '' : 'opacity-25 grayscale'}">${treeSVG(i, n ? TREE_DAYS : cur ? Math.max(c.days.length, 3) : TREE_DAYS, n ? 50 : cur ? c.leaves : 0, { ground: false, viewBox: '10 10 180 180', maxLeaves: 50 })}</div>
+      <p class="text-[10px] leading-tight ${n || cur ? 'text-gray-700' : 'text-gray-400'}">${n || cur ? x.n : '???'}</p>
+      <p class="text-[9px] text-gray-400 font-sans">${n ? `×${n}` : cur ? '키우는 중' : '🔒'}</p></div>`;
+  }).join('');
+}
+function checkBadges() {
+  const fresh = [];
+  BADGES.forEach(b => { if (!state.badges[b.id] && b.test(state)) { state.badges[b.id] = today(); fresh.push(b); } });
+  return fresh;
+}
+function renderStatsIfOpen() { if (currentTab === 'stats') renderStats(); if (currentTab === 'cal') renderCalendar(); }
+
+/* ================= 리포트 ================= */
+let exportPeriod = 'today';
+function buildReport(p) {
+  const [from, to] = periodRange(p);
+  const label = { today: '오늘', week: '최근 7일', month: '이번 달', all: '전체' }[p];
+  const totals = subjectTotals(from, to);
+  const sum = Object.values(totals).reduce((a, b) => a + b, 0);
+  const ses = state.sessions.filter(s => s.d >= from && s.d <= to);
+  const ok = ses.filter(s => s.ok).length;
+  const now = new Date();
+  const L = [];
+  L.push(`[ 예현이의 숲 학습 리포트 · ${state.settings.student || '학생'} ]`);
+  L.push(`📅 기간: ${from === to ? md(from) : `${md(from)} ~ ${md(to)}`} (${label})`);
+  L.push(`🕒 작성: ${now.getMonth() + 1}/${now.getDate()} ${pad(now.getHours())}:${pad(now.getMinutes())}`);
+  L.push('');
+  const fc = state.forest.cur;
+  L.push(`🌳 키우는 나무: ${SPECIES[fc.sp].n} (${STAGES[stageIdx(fc.days.length)].n}) ${fc.days.length}/${TREE_DAYS}일 · 잎 ${fc.leaves}장`);
+  L.push(`🌲 나의 숲: 큰 나무 ${state.forest.trees.length}그루 · 숲 친구 ${ANIMALS.filter(a => state.animals[a.k]).map(a => a.e).join('') || '아직 없음'}${isThirsty() ? ' · 💧 목마름' : ''}`);
+  L.push(`📆 이번 주 목표: ${fmtMin(weekTotal(weekStart()))} / ${fmtMin(weekGoal())} (${Math.round(weekTotal(weekStart()) / weekGoal() * 100)}%)`);
+  if (examInfo()) L.push(`📝 시험기간 모드: ${examInfo().name} ${ddayLabel(ddayDiff(examInfo().date))}`);
+  L.push(`🔥 연속 공부: ${currentStreak()}일 (최고 ${bestStreak()}일)`);
+  L.push(`⏱ 총 공부시간: ${fmtMin(sum)}`);
+  L.push(`🎯 집중: 성공 ${ok}회 / 실패 ${ses.length - ok}회${ses.length ? ` (성공률 ${Math.round(ok / ses.length * 100)}%)` : ''}`);
+  L.push('');
+  L.push('=== 📊 과목별 공부시간 ===');
+  if (!sum) L.push('기록 없음');
+  SUBJECTS.slice().sort((a, b) => totals[b.k] - totals[a.k]).forEach(s => { if (totals[s.k]) L.push(`- ${s.k}: ${fmtMin(totals[s.k])} (${Math.round(totals[s.k] / sum * 100)}%)`); });
+  const zero = SUBJECTS.filter(s => !totals[s.k]).map(s => s.k);
+  if (sum && zero.length) L.push(`- 기록 없는 과목: ${zero.join(', ')}`);
+  if (p !== 'today') {
+    L.push('');
+    L.push('=== 📅 날짜별 기록 ===');
+    const days = Object.keys(state.daily).filter(d => d >= from && d <= to && dayTotal(d) > 0).sort();
+    if (!days.length) L.push('기록 없음');
+    days.forEach(d => {
+      const o = state.daily[d];
+      const td = state.todos[d] || [];
+      L.push(`${md(d)} ${fmtMin(dayTotal(d))} — ${SUBJECTS.filter(s => o[s.k]).map(s => `${s.k} ${o[s.k]}분`).join(', ')}${td.length ? ` | 목표 ${td.filter(t => t.done).length}/${td.length}` : ''}`);
+    });
+  } else if (ses.length) {
+    L.push('');
+    L.push('=== ⏳ 오늘 집중 기록 ===');
+    ses.forEach(s => L.push(`${s.t} ${s.sub} ${s.min}분 ${s.ok ? (s.fl === false ? '기록 🌱' : '성공 🍃') : `실패 🍂 (${s.why})`}`));
+  }
+  L.push('');
+  L.push(`=== ✅ 오늘의 목표 (${md(today())}) ===`);
+  const td = state.todos[today()] || [];
+  if (!td.length) L.push('작성된 목표가 없어요');
+  else {
+    const dn = td.filter(t => t.done).length;
+    L.push(`총 ${td.length}개 중 ${dn}개 완료 (${Math.round(dn / td.length * 100)}%)`);
+    const st = state.daily[today()] || {};
+    td.forEach(t => L.push(`${t.done ? '[O]' : '[X]'} ${t.sub} - ${t.task}${t.target ? ` (목표 ${t.target}분 / 실제 ${st[t.sub] || 0}분)` : ''}`));
+  }
+  const dd = upcomingDdays();
+  if (dd.length) { L.push(''); L.push('=== 📅 다가오는 시험 ==='); dd.forEach(x => L.push(`${(DT[x.type] || DT.etc).e} ${x.name} ${ddayLabel(ddayDiff(x.date))} (${md(x.date)})`)); }
+  L.push('');
+  L.push('=== 🌱 과목별 자동 성장 목표 ===');
+  L.push(SUBJECTS.map(s => { const a = autoInfo(s.k); return `${s.k} ${a.goal}분${a.next ? `→${a.next}분` : ''}`; }).join(' · '));
+  return L.join('\n');
+}
+let dlApi = null;
+function openExport() {
+  document.querySelectorAll('#export-seg button').forEach(b => { b.classList.toggle('on', b.dataset.p === exportPeriod); b.onclick = () => { exportPeriod = b.dataset.p; openExport(); }; });
+  document.getElementById('export-hint').textContent = `${state.settings.teacher}께 복사해서 카톡으로 보내주세요!`;
+  document.getElementById('export-text').value = buildReport(exportPeriod);
+  document.getElementById('dl-btn').classList.toggle('hidden', !dlApi && IN_CLAUDE);
+  openModal('export');
+}
+async function copyText(text, btn, okLabel) {
+  let ok = false;
+  try { await navigator.clipboard.writeText(text); ok = true; } catch (e) {
+    try { const ta = document.createElement('textarea'); ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.select(); ok = document.execCommand('copy'); ta.remove(); } catch (e2) { }
+  }
+  if (ok) {
+    if (btn) { const o = btn.textContent; btn.textContent = okLabel || '✅ 복사 완료!'; btn.classList.add('!bg-emerald-500'); setTimeout(() => { btn.textContent = o; btn.classList.remove('!bg-emerald-500'); }, 1800); }
+    else toast(okLabel || '✅ 복사했어요');
+  } else toast('복사가 막혀 있어요. 글을 길게 눌러 직접 복사해 주세요');
+  return ok;
+}
+function copyExport() { copyText(document.getElementById('export-text').value, document.getElementById('copy-btn')); }
+async function downloadExport() {
+  const name = `예현이의숲_리포트_${today()}.txt`, text = document.getElementById('export-text').value;
+  if (dlApi) {
+    try { await dlApi.save({ filename: name, data: text }); } catch (e) { toast('파일 저장이 취소되었어요'); }
+    return;
+  }
+  // [추가] 설치형 앱(GitHub Pages)에서는 일반 다운로드
+  try {
+    const url = URL.createObjectURL(new Blob([text], { type: 'text/plain;charset=utf-8' }));
+    const a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+    toast('💾 다운로드 폴더에 저장했어요');
+  } catch (e) { toast('저장이 안 되면 [복사하기]를 써 주세요'); }
+}
+
+/* ================= 설정 ================= */
+function openSettings() {
+  if (state.active) { toast('집중 중에는 설정을 바꿀 수 없어요'); return; }
+  const s = state.settings;
+  document.getElementById('set-strict').checked = s.strict;
+  document.getElementById('set-sound').checked = s.sound;
+  document.getElementById('set-test').checked = s.test;
+  document.getElementById('set-teacher').value = s.teacher;
+  document.getElementById('set-student').value = s.student || '';
+  document.getElementById('set-msgs').value = s.messages.join('\n');
+  document.getElementById('restore-box').classList.add('hidden');
+  openModal('settings');
+}
+function saveSettings() {
+  const s = state.settings;
+  s.strict = document.getElementById('set-strict').checked;
+  s.sound = document.getElementById('set-sound').checked;
+  s.test = document.getElementById('set-test').checked;
+  s.teacher = document.getElementById('set-teacher').value.trim() || '은지쌤';
+  s.student = document.getElementById('set-student').value.trim() || '예현';
+  const msgs = document.getElementById('set-msgs').value.split('\n').map(x => x.trim()).filter(Boolean);
+  s.messages = msgs.length ? msgs : DEFAULT_MSGS.slice();
+  save(); closeModal(); renderAll(); toast('⚙️ 저장했어요');
+}
+function resetMsgs() { document.getElementById('set-msgs').value = DEFAULT_MSGS.join('\n'); }
+function copyBackup() { const c = Object.assign({}, state, { active: null }); copyText(btoa(unescape(encodeURIComponent(JSON.stringify(c)))), null, '💾 백업 코드를 복사했어요. 메모장에 붙여넣어 두세요'); }
+function toggleRestore() { document.getElementById('restore-box').classList.toggle('hidden'); }
+function doRestore() {
+  const raw = document.getElementById('restore-text').value.trim();
+  let data = null;
+  try { data = JSON.parse(decodeURIComponent(escape(atob(raw)))); } catch (e) { try { data = JSON.parse(raw); } catch (e2) { } }
+  if (!data || typeof data !== 'object' || !data.daily) { toast('백업 코드가 올바르지 않아요'); return; }
+  closeModal();
+  setTimeout(() => confirmBox('💾', '백업을 불러올까요?', '지금 이 기기의 기록이 백업 내용으로 바뀌어요.', '불러오기', '취소', () => { state = migrate(data); state.active = null; save(); renderAll(); toast('💾 백업을 불러왔어요'); }), 320);
+}
+function askReset() {
+  closeModal();
+  setTimeout(() => confirmBox('🗑️', '모든 기록을 지울까요?', '공부 기록, 목표, 캐릭터가 전부 처음으로 돌아가요. 되돌릴 수 없어요!', '전부 지우기', '취소', () => { const s = state.settings; state = defaultState(); state.settings = s; save(); renderAll(); toast('처음부터 다시 시작!'); }), 320);
+}
+
+/* ================= 모달·토스트·탭 ================= */
+let openId = null;
+function openModal(id) {
+  const ov = document.getElementById('overlay');
+  if (openId) document.getElementById('m-' + openId).classList.add('hidden');
+  openId = id;
+  ov.classList.remove('hidden'); ov.classList.add('flex');
+  const m = document.getElementById('m-' + id); m.classList.remove('hidden'); m.classList.add('flex', 'anim-pop');
+}
+function closeModal() {
+  if (!openId) return;
+  const m = document.getElementById('m-' + openId); m.classList.add('hidden'); m.classList.remove('flex', 'anim-pop');
+  openId = null;
+  const ov = document.getElementById('overlay'); ov.classList.add('hidden'); ov.classList.remove('flex');
+}
+function confirmBox(icon, title, msg, okLabel, cancelLabel, onOk) {
+  document.getElementById('c-icon').textContent = icon;
+  document.getElementById('c-title').textContent = title;
+  document.getElementById('c-msg').textContent = msg;
+  const ok = document.getElementById('c-ok'), cc = document.getElementById('c-cancel');
+  ok.textContent = okLabel; cc.textContent = cancelLabel;
+  ok.onclick = () => { closeModal(); onOk(); };
+  cc.onclick = () => closeModal();
+  openModal('confirm');
+}
+function toast(msg) {
+  const w = document.getElementById('toast-wrap');
+  w.innerHTML = '';
+  const t = document.createElement('div');
+  t.id = 'toast';
+  t.className = 'fixed-none bg-gray-800/90 text-white text-sm font-sans px-4 py-2.5 rounded-2xl shadow-lg whitespace-nowrap max-w-[85vw] truncate';
+  t.style.transform = 'translateX(-50%)';
+  t.textContent = msg;
+  w.appendChild(t);
+  clearTimeout(toast.tid);
+  toast.tid = setTimeout(() => t.remove(), 2600);
+}
+let currentTab = 'timer';
+function switchTab(id) {
+  if (state.active && id !== 'timer') { toast('🔥 집중 중에는 다른 탭으로 갈 수 없어요!'); return; }
+  currentTab = id;
+  ['timer', 'todo', 'cal', 'stats', 'teacher'].forEach(k => {
+    const v = document.getElementById('view-' + k);
+    v.classList.toggle('hidden', k !== id); v.classList.toggle('flex', k === id);
+  });
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('on', b.dataset.tab === id));
+  document.getElementById('main').scrollTop = 0;
+  if (id === 'todo') renderTodos();
+  if (id === 'cal') renderCalendar();
+  if (id === 'stats') renderStats();
+  if (id === 'teacher') renderTeacher();
+}
+function renderAll() {
+  renderTree(); renderHeader();
+  if (!state.active) renderSetup();
+  if (currentTab === 'todo') renderTodos();
+  if (currentTab === 'cal') renderCalendar();
+  if (currentTab === 'stats') renderStats();
+  if (currentTab === 'teacher') renderTeacher();
+}
+
+/* ================= 선생님 모드 (페이지 주인에게만) ================= */
+const teacher = { students: [], stamps: {}, sel: null, writing: false, ready: false };
+function setupTeacher(db) {
+  const tb = document.getElementById('tab-teacher'); tb.classList.remove('hidden'); tb.classList.add('flex');
+  try {
+    db.collection('students').onSnapshot(snap => {
+      teacher.students = snap.docs.filter(d => d.id !== cloud.id).map(d => {
+        const x = d.data() || {}; let st = null;
+        try { st = migrate(JSON.parse(x.json)); } catch (e) { }
+        return { id: d.id, name: x.name || '학생', updatedAt: x.updatedAt || 0, live: x.live || null, st };
+      }).filter(x => x.st).sort((a, b) => b.updatedAt - a.updatedAt);
+      if (!teacher.students.some(x => x.id === teacher.sel)) teacher.sel = teacher.students[0] ? teacher.students[0].id : null;
+      teacher.ready = true;
+      if (currentTab === 'teacher') renderTeacher();
+    }, () => { teacher.ready = true; if (currentTab === 'teacher') renderTeacher(); });
+    db.collection('stamps').onSnapshot(snap => {
+      teacher.stamps = {};
+      snap.docs.forEach(d => teacher.stamps[d.id] = (d.data() || {}).days || {});
+      if (currentTab === 'teacher' && !teacher.writing) renderTeacher();
+    }, () => { });
+  } catch (e) { }
+  setTimeout(() => { if (!teacher.ready) { teacher.ready = true; if (currentTab === 'teacher') renderTeacher(); } }, 10000);
+}
+function ago(ms) {
+  const m = Math.floor((Date.now() - ms) / 60000);
+  if (m < 1) return '방금'; if (m < 60) return m + '분 전';
+  const h = Math.floor(m / 60); if (h < 24) return h + '시간 전';
+  return Math.floor(h / 24) + '일 전';
+}
+function renderTeacher() {
+  const chips = document.getElementById('t-students'), body = document.getElementById('t-body');
+  if (!teacher.students.length) {
+    chips.innerHTML = '';
+    body.innerHTML = `<div class="card p-5 text-center text-sm text-gray-500 font-sans leading-relaxed">${teacher.ready ? '아직 들어온 학생 기록이 없어요.<br>학생이 이 페이지를 열고 공부를 시작하면<br>여기에 자동으로 나타나요 🌱' : '불러오는 중…'}</div>`;
+    return;
+  }
+  chips.innerHTML = '';
+  teacher.students.forEach(s => {
+    const b = document.createElement('button');
+    b.className = `chip border-2 border-green-100 rounded-full px-3 py-1.5 text-sm ${s.id === teacher.sel ? 'on' : 'bg-white text-gray-600'}`;
+    b.textContent = `${s.live ? '🔥 ' : ''}${s.name}`;
+    b.onclick = () => { teacher.sel = s.id; renderTeacher(); };
+    chips.appendChild(b);
+  });
+  const s = teacher.students.find(x => x.id === teacher.sel) || teacher.students[0];
+  const stamps = teacher.stamps[s.id] || {};
+  body.innerHTML = withState(s.st, () => {
+    const t = today(), tt = dayTotal(t);
+    const [wf, wt] = periodRange('week'), wk = subjectTotals(wf, wt), wsum = Object.values(wk).reduce((a, b) => a + b, 0);
+    const td = state.todos[t] || [], up = upcomingDdays()[0];
+    const live = s.live ? `<div class="bg-red-50 text-red-500 rounded-xl px-3 py-2 text-sm mb-3">🔥 지금 ${esc(s.live.sub)} ${s.live.sw ? '순공 측정' : '집중'} 중 · ${Math.max(0, Math.floor((Date.now() - s.live.since) / 60000))}분째</div>` : '';
+    let h = `<div class="card p-4">${live}
+      <div class="flex justify-between items-center"><h3 class="text-lg text-gray-700">${esc(s.name)}</h3><span class="text-[11px] text-gray-400 font-sans">마지막 기록 ${ago(s.updatedAt)}</span></div>
+      <div class="grid grid-cols-3 gap-2 mt-3 text-center">
+        <div class="bg-green-50 rounded-xl py-2"><p class="text-[10px] text-gray-400 font-sans">오늘</p><p class="text-green-600">${fmtMin(tt)}</p></div>
+        <div class="bg-green-50 rounded-xl py-2"><p class="text-[10px] text-gray-400 font-sans">최근 7일</p><p class="text-green-600">${fmtMin(wsum)}</p></div>
+        <div class="bg-green-50 rounded-xl py-2"><p class="text-[10px] text-gray-400 font-sans">연속 공부</p><p class="text-green-600">🔥 ${currentStreak()}일</p></div>
+      </div>
+      <p class="text-xs text-gray-500 font-sans mt-3">${isThirsty() ? `💧 목마름(${daysSinceAch()}일째 쉼) · ` : ''}🌳 ${SPECIES[state.forest.cur.sp].n} ${state.forest.cur.days.length}/${TREE_DAYS}일 · 숲 ${state.forest.trees.length}그루 ${ANIMALS.filter(a => state.animals[a.k]).map(a => a.e).join('')} · 주간 ${Math.round(weekTotal(weekStart()) / weekGoal() * 100)}% · 오늘 목표 ${td.filter(x => x.done).length}/${td.length}${up ? ` · ${esc(up.name)} ${ddayLabel(ddayDiff(up.date))}` : ''}</p>
+    </div>`;
+    const max = Math.max(...Object.values(wk), 1);
+    h += `<div class="card p-4"><h3 class="text-green-600 mb-2">📊 최근 7일 과목별</h3><div class="flex flex-col gap-2 font-sans text-xs">${SUBJECTS.map(x => `<div class="flex items-center gap-2"><span class="w-14">${x.k}</span><div class="flex-1 bg-gray-100 rounded-full h-2.5 overflow-hidden"><div class="h-2.5 rounded-full" style="width:${wk[x.k] / max * 100}%;background:${x.c}"></div></div><span class="w-14 text-right">${wk[x.k] ? fmtMin(wk[x.k]) : '-'}</span></div>`).join('')}</div></div>`;
+    h += `<div class="card p-4"><h3 class="text-green-600 mb-1">💮 날짜별 기록 & 도장</h3><p class="text-[11px] text-gray-400 font-sans mb-3">도장을 누르면 학생 달력에 바로 표시돼요. 한 번 더 누르면 취소돼요.</p><div class="flex flex-col gap-2">`;
+    for (let i = 0; i < 14; i++) {
+      const d = addDays(t, -i), tot = dayTotal(d), o = state.daily[d] || {}, tds = state.todos[d] || [];
+      if (!tot && !tds.length && i > 0) continue;
+      h += `<div class="border border-green-100 rounded-xl p-2.5"><div class="flex justify-between items-center text-sm"><span>${md(d)}${i === 0 ? ' · 오늘' : ''}</span><b class="text-green-600">${tot ? fmtMin(tot) : '공부 기록 없음'}</b></div>
+        ${tot ? `<div class="flex h-2 rounded-full overflow-hidden mt-1.5">${SUBJECTS.filter(x => o[x.k]).map(x => `<div style="width:${o[x.k] / tot * 100}%;background:${x.c}"></div>`).join('')}</div><p class="text-[10px] text-gray-500 font-sans mt-1">${SUBJECTS.filter(x => o[x.k]).map(x => `${x.k} ${o[x.k]}분`).join(' · ')}</p>` : ''}
+        ${tds.length ? `<p class="text-[10px] text-gray-500 font-sans mt-0.5">✅ 목표 ${tds.filter(x => x.done).length}/${tds.length}: ${tds.map(x => esc(x.task)).join(', ')}</p>` : ''}
+        <div class="grid grid-cols-4 gap-1 mt-2">${Object.entries(STAMPS).map(([k, v]) => `<button data-stamp="${k}" data-day="${d}" class="rounded-lg py-1 text-[11px] border ${stamps[d] === k ? 'bg-amber-100 border-amber-300 text-amber-700' : 'bg-white border-gray-100 text-gray-500'}">${v.e} ${v.t}</button>`).join('')}</div></div>`;
+    }
+    h += `</div></div>`;
+    h += `<div class="card p-4"><div class="flex justify-between items-center mb-2"><h3 class="text-green-600">📋 주간 리포트</h3><button id="t-copy" class="text-xs bg-green-500 text-white rounded-lg px-3 py-1.5">복사</button></div><pre id="t-report" class="text-[11px] font-sans whitespace-pre-wrap bg-gray-50 rounded-xl p-3 max-h-64 overflow-y-auto">${esc(buildReport('week'))}</pre></div>`;
+    return h;
+  });
+  body.querySelectorAll('[data-stamp]').forEach(b => b.onclick = () => setStamp(s.id, b.dataset.day, b.dataset.stamp));
+  document.getElementById('t-copy').onclick = e => copyText(document.getElementById('t-report').textContent, e.target, '✅ 복사됨');
+}
+async function setStamp(sid, d, k) {
+  if (teacher.writing || !cloud.db) return;
+  const cur = Object.assign({}, teacher.stamps[sid] || {});
+  if (cur[d] === k) delete cur[d]; else cur[d] = k;
+  teacher.writing = true;
+  teacher.stamps[sid] = cur; renderTeacher();
+  try { await cloud.db.doc('stamps/' + sid).set({ days: cur }); toast(cur[d] ? `💮 ${md(d)} '${STAMPS[k].e} ${STAMPS[k].t}' 도장 쾅!` : '도장을 지웠어요'); }
+  catch (e) { toast('도장 저장에 실패했어요. 잠시 후 다시 해주세요'); }
+  teacher.writing = false;
+}
+
+/* ================= 시작 ================= */
+document.getElementById('todo-task').addEventListener('keydown', e => { if (e.key === 'Enter') addTodo(); });
+checkAnimals();
+try { if (!IS_STANDALONE && !localStorage.getItem('yh-install-seen')) document.getElementById('install-banner').classList.remove('hidden'); } catch (e) { }
+switchTab('timer');
+renderAll();
+if (state.active && state.active.sw) {
+  const a = state.active;
+  // 마지막으로 확인된 시점까지만 인정
+  const el = a.acc + (a.paused ? 0 : Math.max(0, (a.beat || a.runFrom) - a.runFrom));
+  if (state.settings.strict) finishStopwatch('앱이 닫혀서 마지막 확인 시점까지 기록했어요', el);
+  else { a.acc = el; a.paused = false; a.runFrom = Date.now(); a.beat = Date.now(); save(); showRunning(); toast('⏸ 멈췄던 스톱워치를 이어서 재요'); }
+} else if (state.active) {
+  if (state.settings.strict) {
+    onFail('집중 중에 앱을 닫거나 새로고침했어요');
+  } else {
+    const a = state.active;
+    if (a.paused == null) a.paused = Math.max(0, a.endAt - Date.now());
+    a.endAt = Date.now() + a.paused; a.paused = null; save();
+    showRunning();
+    toast('⏸ 멈췄던 타이머를 이어서 시작해요');
+  }
+}
+// 날짜가 바뀌면 화면 갱신
+let lastDay = today();
+setInterval(() => { if (today() !== lastDay) { lastDay = today(); renderAll(); } }, 30000);
+
+(async () => {
+  initCloud();
+  try { if (window.claude && window.claude.use) { dlApi = await window.claude.use('downloads'); } } catch (e) { dlApi = null; }
+})();
+</script>
+</body>
+</html>
