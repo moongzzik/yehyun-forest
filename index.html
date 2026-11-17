@@ -51,12 +51,47 @@ if (window.tailwind) tailwind.config = { theme: { extend: { fontFamily: { sans: 
   @keyframes twinkle { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
   .twinkle { animation: twinkle 1.6s ease-in-out infinite; }
   .thirsty { filter: saturate(.25) sepia(.55) brightness(1.02); transform: rotate(-1.5deg); }
+  /* [추가] 글자 크기 3단계 (설정에서 선택, 기본 '크게') */
+  #app.fs2 .text-\[8px\] { font-size: 10px !important; line-height: 1.4 !important; }
+  #app.fs2 .text-\[9px\] { font-size: 11px !important; line-height: 1.4 !important; }
+  #app.fs2 .text-\[10px\] { font-size: 12.5px !important; line-height: 1.4 !important; }
+  #app.fs2 .text-\[11px\] { font-size: 13.5px !important; line-height: 1.4 !important; }
+  #app.fs2 .text-xs { font-size: 14px !important; line-height: 1.4 !important; }
+  #app.fs2 .text-sm { font-size: 15.5px !important; line-height: 1.4 !important; }
+  #app.fs2 .text-base { font-size: 17px !important; line-height: 1.4 !important; }
+  #app.fs2 .text-lg { font-size: 19.5px !important; line-height: 1.4 !important; }
+  #app.fs3 .text-\[8px\] { font-size: 11px !important; line-height: 1.4 !important; }
+  #app.fs3 .text-\[9px\] { font-size: 12.5px !important; line-height: 1.4 !important; }
+  #app.fs3 .text-\[10px\] { font-size: 14px !important; line-height: 1.4 !important; }
+  #app.fs3 .text-\[11px\] { font-size: 15px !important; line-height: 1.4 !important; }
+  #app.fs3 .text-xs { font-size: 15.5px !important; line-height: 1.4 !important; }
+  #app.fs3 .text-sm { font-size: 17px !important; line-height: 1.4 !important; }
+  #app.fs3 .text-base { font-size: 18.5px !important; line-height: 1.4 !important; }
+  #app.fs3 .text-lg { font-size: 21px !important; line-height: 1.4 !important; }
+  #app.fs2 .font-sans, #app.fs3 .font-sans { letter-spacing: -0.01em; }
+  /* 좁은 곳은 넘치지 않게 */
+  #app.fs2 .seg button { font-size: 13px !important; }  #app.fs3 .seg button { font-size: 13.5px !important; }
+  #app.fs3 nav .tab-btn span:last-child { font-size: 13px !important; }
+  #app.fs2 .cal-day span:first-child { font-size: 13px !important; }  #app.fs3 .cal-day span:first-child { font-size: 14px !important; }
+  #app.fs2 .cal-day span + span { font-size: 10.5px !important; }  #app.fs3 .cal-day span + span { font-size: 11px !important; }
+  /* [추가] 태블릿 2단 화면 */
+  @media (min-width: 760px) {
+    #app.wide { max-width: 1180px !important; height: calc(100dvh - 2rem) !important; max-height: none !important; }
+    #app.wide #main { display: grid; grid-template-columns: minmax(340px, 0.9fr) minmax(0, 1.1fr); overflow: hidden; padding-bottom: 0; }
+    #app.wide #main > section { overflow-y: auto; min-height: 0; height: 100%; padding-bottom: 6rem; }
+    #app.wide #view-timer { grid-column: 1; grid-row: 1; border-right: 2px solid #E3F2DA; }
+    #app.wide #main > section:not(#view-timer) { grid-column: 2; grid-row: 1; }
+    #app.wide nav [data-tab="timer"] { display: none !important; }
+    #app.wide #char-wrap { height: 18rem; }
+    #app.wide #tree-box:not([style*="7rem"]) { width: 17rem; height: 17rem; }
+    #app.wide nav { padding-left: 25%; padding-right: 25%; }
+  }
   .tab-btn.on { color: #15803D; transform: scale(1.08); }
 </style>
 </head>
 <body class="text-gray-700 min-h-screen flex items-center justify-center sm:p-4">
 
-<div id="app" class="w-full max-w-md h-[100dvh] sm:h-[860px] sm:max-h-[95vh] glass sm:rounded-[2.5rem] shadow-2xl flex flex-col relative overflow-hidden sm:border-2 border-green-100">
+<div id="app" class="fs2 w-full max-w-md h-[100dvh] sm:h-[860px] sm:max-h-[95vh] glass sm:rounded-[2.5rem] shadow-2xl flex flex-col relative overflow-hidden sm:border-2 border-green-100">
 
   <!-- 헤더 -->
   <header class="flex justify-between items-center gap-2 px-4 pt-5 pb-3 border-b border-green-100 relative z-10" style="padding-top:max(1.25rem, env(safe-area-inset-top))">
@@ -392,6 +427,14 @@ if (window.tailwind) tailwind.config = { theme: { extend: { fontFamily: { sans: 
           <span><b class="font-jua text-base text-gray-700">🚨 강력 모드</b><br><span class="text-xs text-gray-400">켜짐: 화면을 벗어나면 바로 실패<br>꺼짐: 벗어나면 타이머만 멈춤</span></span>
           <input id="set-strict" type="checkbox" class="w-6 h-6 accent-green-500">
         </label>
+        <div>
+          <b class="font-jua text-base text-gray-700">🔠 글자 크기</b>
+          <div id="font-seg" class="seg grid grid-cols-3 bg-green-50 rounded-xl p-1 mt-1">
+            <button data-fs="1" class="py-2 rounded-lg text-gray-500">보통</button>
+            <button data-fs="2" class="py-2 rounded-lg text-gray-500">크게</button>
+            <button data-fs="3" class="py-2 rounded-lg text-gray-500">아주 크게</button>
+          </div>
+        </div>
         <label class="flex items-center justify-between gap-3">
           <span><b class="font-jua text-base text-gray-700">🔔 성공 효과음·진동</b></span>
           <input id="set-sound" type="checkbox" class="w-6 h-6 accent-green-500">
@@ -419,6 +462,7 @@ if (window.tailwind) tailwind.config = { theme: { extend: { fontFamily: { sans: 
         <div class="border-t border-green-100 pt-3">
           <b class="font-jua text-base text-gray-700">💾 백업 / 기기 옮기기</b>
           <p class="text-xs text-gray-400 mb-2">백업 코드를 복사해 두었다가 다른 기기에서 붙여넣으면 기록이 그대로 옮겨져요.</p>
+          <p id="sync-note" class="text-xs bg-sky-50 border border-sky-100 text-sky-700 rounded-xl p-2 mb-2"></p>
           <div class="flex gap-2">
             <button onclick="copyBackup()" class="flex-1 bg-green-50 text-green-600 py-2 rounded-xl">백업 코드 복사</button>
             <button onclick="toggleRestore()" class="flex-1 bg-green-50 text-green-600 py-2 rounded-xl">백업 불러오기</button>
@@ -522,7 +566,7 @@ const LS_KEY = 'yehyun-challenge-v2';
 function defaultState() {
   return {
     v: 2, updatedAt: 0,
-    settings: { student: '예현', teacher: '은지쌤', strict: true, sound: true, test: false, messages: DEFAULT_MSGS.slice() },
+    settings: { student: '예현', teacher: '은지쌤', strict: true, sound: true, test: false, fontSize: 2, messages: DEFAULT_MSGS.slice() },
     ddays: [],       // { id, type, name, date, subs }
     animals: {},     // { 다람쥐: 'YYYY-MM-DD' }
     weekGoals: {},   // { 주 시작(월) 날짜: 분 }
@@ -575,6 +619,8 @@ function save() {
 function withState(s, fn) { const saved = state, ro = readOnlyView; state = s; readOnlyView = true; try { return fn(); } finally { state = saved; readOnlyView = ro; } }
 
 /* ---- 클라우드 동기화: students/<내 id> 에 저장 → 선생님(페이지 주인)이 자동으로 볼 수 있음 ---- */
+// [추가] 이 기기의 고유 표시 (폰·태블릿 자동 연동 때 내 기기가 쓴 것인지 구분)
+const DEVICE_ID = (() => { try { let d = localStorage.getItem('yh-device'); if (!d) { d = Math.random().toString(36).slice(2, 10); localStorage.setItem('yh-device', d); } return d; } catch (e) { return Math.random().toString(36).slice(2, 10); } })();
 const cloud = { ref: null, busy: false, again: false, timer: null, db: null, id: null, isOwner: false };
 let myStamps = {};   // { 'YYYY-MM-DD': 'best' }
 const STAMPS = { check: { e: '👀', t: '확인했어요' }, good: { e: '👍', t: '잘했어요' }, best: { e: '🌟', t: '최고예요' }, cheer: { e: '💪', t: '힘내자' } };
@@ -585,6 +631,7 @@ function setSync(mode) {
   if (mode === 'on') { b.textContent = '☁️'; b.title = '계정에 자동 저장 중'; b.className = base + 'bg-emerald-50'; }
   else if (mode === 'err') { b.textContent = '⏳'; b.title = '저장 재시도 중'; b.className = base + 'bg-amber-50'; }
   else { b.textContent = '📱'; b.title = '이 기기에 저장 중'; b.className = base + 'bg-gray-50'; }
+  if (mode === 'on') b.title = '이 기기에 저장 · 선생님께 자동 공유 중';
 }
 function cloudQueue() { if (!cloud.ref) return; clearTimeout(cloud.timer); cloud.timer = setTimeout(cloudFlush, 1500); }
 async function cloudFlush() {
@@ -595,7 +642,7 @@ async function cloudFlush() {
     const copy = Object.assign({}, state, { active: null });
     const a = state.active;
     const live = a ? { sub: a.sub, since: a.startAt || Date.now(), sw: !!a.sw, min: a.min || 0 } : null;
-    await cloud.ref.set({ json: JSON.stringify(copy), updatedAt: state.updatedAt, name: state.settings.student || '학생', live });
+    await cloud.ref.set({ json: JSON.stringify(copy), updatedAt: state.updatedAt, name: state.settings.student || '학생', live, dev: DEVICE_ID });
     setSync('on');
   } catch (e) {
     const code = e && e.code;
@@ -633,18 +680,8 @@ async function initCloud() {
     const ref = db.doc('students/' + id);
     const snap = await Promise.race([ref.get(), new Promise((_, rej) => setTimeout(() => rej({ code: 'timeout' }), 10000))]);
     cloud.ref = ref;
-    let remote = null;
-    if (snap.exists) { try { remote = JSON.parse(snap.data().json); } catch (e) { } }
-    if (remote && (remote.updatedAt || 0) > (state.updatedAt || 0)) {
-      const keepActive = state.active;
-      state = migrate(remote); state.active = keepActive;
-      try { localStorage.setItem(LS_KEY, JSON.stringify(state)); } catch (e) { }
-      renderAll();
-      toast('☁️ 저장된 기록을 불러왔어요');
-      setSync('on');
-    } else if (!remote || (state.updatedAt || 0) > (remote.updatedAt || 0)) {
-      if (state.updatedAt) cloudFlush(); else setSync('on');
-    } else setSync('on');
+    // [수정] 기기마다 따로 저장: 다른 기기의 기록을 불러오지 않고, 이 기기 기록만 선생님께 공유
+    if (state.updatedAt) cloudFlush(); else setSync('on');
   } catch (e) { setSync('off'); }
 }
 
@@ -2085,7 +2122,22 @@ function openSettings() {
   document.getElementById('set-student').value = s.student || '';
   document.getElementById('set-msgs').value = s.messages.join('\n');
   document.getElementById('restore-box').classList.add('hidden');
+  renderFontSeg();
+  // [수정] 기기별 저장 안내
+  document.getElementById('sync-note').textContent = '📱 기록은 이 기기(폰·태블릿 각각)에만 저장돼요. 다른 기기로 옮길 때는 위 백업 코드를 쓰세요.';
   openModal('settings');
+}
+// [추가] 글자 크기: 누르면 바로 바뀌고 저장돼요
+function applyFont() {
+  const n = [1, 2, 3].includes(+state.settings.fontSize) ? +state.settings.fontSize : 2;
+  const app = document.getElementById('app');
+  app.classList.remove('fs1', 'fs2', 'fs3'); app.classList.add('fs' + n);
+}
+function renderFontSeg() {
+  document.querySelectorAll('#font-seg button').forEach(b => {
+    b.classList.toggle('on', +b.dataset.fs === (+state.settings.fontSize || 2));
+    b.onclick = () => { state.settings.fontSize = +b.dataset.fs; save(); applyFont(); renderFontSeg(); };
+  });
 }
 function saveSettings() {
   const s = state.settings;
@@ -2151,22 +2203,33 @@ function toast(msg) {
   clearTimeout(toast.tid);
   toast.tid = setTimeout(() => t.remove(), 2600);
 }
-let currentTab = 'timer';
+let currentTab = 'timer', rightTab = 'todo';
+// [추가] 태블릿·폴드 펼친 화면(가로 760px 이상): 왼쪽 나무·타이머 + 오른쪽 목표·달력·통계
+const WIDE_MQ = window.matchMedia ? matchMedia('(min-width: 760px)') : null;
+function isWide() { return !!(WIDE_MQ && WIDE_MQ.matches); }
+function applyWide() { document.getElementById('app').classList.toggle('wide', isWide()); }
+if (WIDE_MQ) { const onWide = () => { applyWide(); switchTab(currentTab === 'timer' && isWide() ? rightTab : currentTab); }; WIDE_MQ.addEventListener ? WIDE_MQ.addEventListener('change', onWide) : WIDE_MQ.addListener(onWide); }
 function switchTab(id) {
-  if (state.active && id !== 'timer') { toast('🔥 집중 중에는 다른 탭으로 갈 수 없어요!'); return; }
+  const wide = isWide();
+  if (wide && id === 'timer') id = rightTab;
+  if (state.active && id !== 'timer' && !wide) { toast('🔥 집중 중에는 다른 탭으로 갈 수 없어요!'); return; }
   currentTab = id;
+  if (id !== 'timer') rightTab = id;
   ['timer', 'todo', 'cal', 'stats', 'teacher'].forEach(k => {
+    const show = k === id || (wide && k === 'timer');
     const v = document.getElementById('view-' + k);
-    v.classList.toggle('hidden', k !== id); v.classList.toggle('flex', k === id);
+    v.classList.toggle('hidden', !show); v.classList.toggle('flex', show);
   });
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('on', b.dataset.tab === id));
-  document.getElementById('main').scrollTop = 0;
+  if (!wide) document.getElementById('main').scrollTop = 0;
+  else { const pane = document.getElementById('view-' + id); if (pane) pane.scrollTop = 0; }
   if (id === 'todo') renderTodos();
   if (id === 'cal') renderCalendar();
   if (id === 'stats') renderStats();
   if (id === 'teacher') renderTeacher();
 }
 function renderAll() {
+  applyFont();
   renderTree(); renderHeader();
   if (!state.active) renderSetup();
   if (currentTab === 'todo') renderTodos();
@@ -2267,6 +2330,8 @@ async function setStamp(sid, d, k) {
 /* ================= 시작 ================= */
 document.getElementById('todo-task').addEventListener('keydown', e => { if (e.key === 'Enter') addTodo(); });
 checkAnimals();
+applyFont();
+applyWide();
 try { if (!IS_STANDALONE && !localStorage.getItem('yh-install-seen')) document.getElementById('install-banner').classList.remove('hidden'); } catch (e) { }
 switchTab('timer');
 renderAll();
