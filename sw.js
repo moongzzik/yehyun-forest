@@ -1,13 +1,15 @@
 // 예현이의 숲 - 오프라인 지원 서비스워커
 // [안내] index.html을 고쳐 다시 올릴 때 VERSION 숫자를 올리면 앱이 새 버전으로 바뀌어요
-const VERSION = 'forest-v7';
+const PREFIX = 'forest-';
+const VERSION = PREFIX + 'v11';
 const CORE = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(VERSION).then(c => c.addAll(CORE)).then(() => self.skipWaiting()));
 });
+// [수정] 같은 주소의 다른 앱(study-forest) 저장소는 건드리지 않음
 self.addEventListener('activate', e => {
-  e.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k !== VERSION).map(k => caches.delete(k)))).then(() => self.clients.claim()));
+  e.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k.startsWith(PREFIX) && k !== VERSION).map(k => caches.delete(k)))).then(() => self.clients.claim()));
 });
 self.addEventListener('fetch', e => {
   const req = e.request;
