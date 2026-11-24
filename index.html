@@ -172,7 +172,7 @@ if (window.tailwind) tailwind.config = { theme: { extend: { fontFamily: { sans: 
             <span id="time-left" class="text-4xl text-green-600 font-bold tracking-widest" style="font-family: ui-rounded, system-ui, sans-serif">30:00</span>
           </div>
         </div>
-        <p id="run-warn" class="text-red-400 mt-3 text-xs bg-red-50 py-2 px-4 rounded-full text-center">🚨 강력 모드: 화면을 벗어나면 잎이 떨어져요</p>
+        <p id="run-warn" class="text-green-700 mt-3 text-xs bg-green-50 py-2 px-4 rounded-full text-center">🚨 강력 모드: 화면을 벗어나면 잎이 떨어져요</p>
       </div>
 
       <!-- 쉬는 시간 -->
@@ -436,10 +436,16 @@ if (window.tailwind) tailwind.config = { theme: { extend: { fontFamily: { sans: 
         <button onclick="saveSettings()" class="text-gray-400 text-3xl leading-none">&times;</button>
       </div>
       <div class="flex flex-col gap-4 font-sans text-sm">
-        <label class="flex items-center justify-between gap-3">
-          <span><b class="font-jua text-base text-gray-700">🚨 강력 모드</b><br><span class="text-xs text-gray-400">켜짐: 화면을 벗어나면 바로 실패<br>꺼짐: 벗어나면 타이머만 멈춤</span></span>
-          <input id="set-strict" type="checkbox" class="w-6 h-6 accent-green-500">
-        </label>
+        <!-- [수정] 화면을 끄거나 나갈 때 동작 3가지 (기본: 계속 진행) -->
+        <div>
+          <b class="font-jua text-base text-gray-700">📵 화면을 끄거나 앱을 나가면</b>
+          <div id="leave-seg" class="seg grid grid-cols-3 bg-green-50 rounded-xl p-1 mt-1">
+            <button data-lm="continue" class="py-2 rounded-lg text-gray-500">계속 진행</button>
+            <button data-lm="pause" class="py-2 rounded-lg text-gray-500">일시정지</button>
+            <button data-lm="fail" class="py-2 rounded-lg text-gray-500">실패(강력)</button>
+          </div>
+          <p id="leave-desc" class="text-xs text-gray-400 mt-1"></p>
+        </div>
         <div>
           <b class="font-jua text-base text-gray-700">🔠 글자 크기</b>
           <div id="font-seg" class="seg grid grid-cols-3 bg-green-50 rounded-xl p-1 mt-1">
@@ -581,7 +587,7 @@ const LS_KEY = 'yehyun-challenge-v2';
 function defaultState() {
   return {
     v: 2, updatedAt: 0,
-    settings: { student: '', teacher: '은지쌤', strict: true, sound: true, test: false, fontSize: 2, messages: DEFAULT_MSGS.slice() },
+    settings: { student: '', teacher: '은지쌤', leaveMode: 'continue', strict: false, sound: true, test: false, fontSize: 2, messages: DEFAULT_MSGS.slice() },
     ddays: [],       // { id, type, name, date, subs }
     animals: {},     // { 다람쥐: 'YYYY-MM-DD' }
     weekGoals: {},   // { 주 시작(월) 날짜: 분 }
@@ -603,6 +609,8 @@ function migrate(s) {
   if (!s || typeof s !== 'object') return d;
   const o = Object.assign(d, s);
   o.settings = Object.assign(defaultState().settings, s.settings || {});
+  // [추가] 화면을 끄거나 나갈 때: continue(계속 진행, 기본) / pause(일시정지) / fail(실패)
+  if (!['continue', 'pause', 'fail'].includes(o.settings.leaveMode)) o.settings.leaveMode = 'continue';
   if (!Array.isArray(o.settings.messages) || !o.settings.messages.length) o.settings.messages = DEFAULT_MSGS.slice();
   o.cycle = Object.assign(defaultState().cycle, s.cycle || {});
   o.auto = o.auto || {};
@@ -1523,9 +1531,11 @@ function showRunning() {
   if (a.sw) { rs.textContent = `${SW_FLOWER}분을 넘기면 잎이 돋아요 🍃`; rs.classList.remove('hidden'); }
   else if (a.sets) { rs.textContent = `${a.set} / ${a.sets} 세트`; rs.classList.remove('hidden'); }
   else rs.classList.add('hidden');
-  document.getElementById('run-warn').textContent = state.settings.strict
+  const lm = state.settings.leaveMode;   // [수정] 3가지 모드 안내
+  document.getElementById('run-warn').textContent = lm === 'fail'
     ? (a.sw ? '🚨 강력 모드: 화면을 벗어나면 측정이 그 자리에서 끝나요' : '🚨 강력 모드: 화면을 벗어나면 잎이 떨어져요 (화면 잠금 포함)')
-    : '⏸ 부드러운 모드: 화면을 벗어나면 시간이 멈춰요';
+    : lm === 'pause' ? '⏸ 일시정지 모드: 화면을 끄거나 나가면 시간이 멈춰요'
+    : '🌙 화면을 꺼도 타이머는 계속 흘러요. 딴짓은 금지!';
   requestWake();
   clearInterval(tickId);
   tick.lastStage = -1;
@@ -1686,8 +1696,19 @@ function askGiveUp() {
 document.addEventListener('visibilitychange', () => {
   const a = state.active;
   if (!a) return;
+  const lm = state.settings.leaveMode;
+  // [수정] 기본(계속 진행): 화면을 꺼도 멈추지 않음. 타이머는 끝나는 시각(endAt) 기준이라 돌아오면 그대로 반영
+  if (lm === 'continue') {
+    if (document.hidden) { a.hiddenAt = Date.now(); saveLocal(); }
+    else {
+      const away = a.hiddenAt ? Date.now() - a.hiddenAt : 0; a.hiddenAt = null;
+      requestWake(); tick();
+      if (state.active && away > 30000) toast('🌙 화면이 꺼져 있는 동안에도 시간이 흘렀어요');
+    }
+    return;
+  }
   if (document.hidden) {
-    if (state.settings.strict) { onFail(a.sw ? '화면을 벗어나서 측정을 멈췄어요' : '공부 중에 화면을 벗어났어요'); return; }
+    if (lm === 'fail') { onFail(a.sw ? '화면을 벗어나서 측정을 멈췄어요' : '공부 중에 화면을 벗어났어요'); return; }
     if (a.sw) { if (!a.paused) { a.acc += Date.now() - a.runFrom; a.paused = true; a.leaves++; save(); } }
     else if (a.paused == null) { a.paused = leftMs(); a.leaves++; save(); }
   } else {
@@ -2130,7 +2151,7 @@ async function downloadExport() {
 function openSettings() {
   if (state.active) { toast('집중 중에는 설정을 바꿀 수 없어요'); return; }
   const s = state.settings;
-  document.getElementById('set-strict').checked = s.strict;
+  renderLeaveSeg();
   document.getElementById('set-sound').checked = s.sound;
   document.getElementById('set-test').checked = s.test;
   document.getElementById('set-teacher').value = s.teacher;
@@ -2148,6 +2169,20 @@ function applyFont() {
   const app = document.getElementById('app');
   app.classList.remove('fs1', 'fs2', 'fs3'); app.classList.add('fs' + n);
 }
+// [추가] 화면 끄기·나가기 설정 버튼
+const LEAVE_DESC = {
+  continue: '화면을 꺼도 타이머가 계속 흘러요. 다시 켜면 그동안의 시간이 그대로 반영돼요. (다른 앱을 써도 멈추지 않으니 스스로 약속을 지켜요!)',
+  pause: '화면을 끄거나 나가면 타이머가 멈추고, 돌아오면 이어서 흘러요.',
+  fail: '화면을 끄거나 나가면 바로 실패로 처리돼요. (화면 꺼짐 포함)',
+};
+function renderLeaveSeg() {
+  const m = state.settings.leaveMode || 'continue';
+  document.querySelectorAll('#leave-seg button').forEach(b => {
+    b.classList.toggle('on', b.dataset.lm === m);
+    b.onclick = () => { state.settings.leaveMode = b.dataset.lm; save(); renderLeaveSeg(); };
+  });
+  document.getElementById('leave-desc').textContent = LEAVE_DESC[m];
+}
 function renderFontSeg() {
   document.querySelectorAll('#font-seg button').forEach(b => {
     b.classList.toggle('on', +b.dataset.fs === (+state.settings.fontSize || 2));
@@ -2156,7 +2191,6 @@ function renderFontSeg() {
 }
 function saveSettings() {
   const s = state.settings;
-  s.strict = document.getElementById('set-strict').checked;
   s.sound = document.getElementById('set-sound').checked;
   s.test = document.getElementById('set-test').checked;
   s.teacher = document.getElementById('set-teacher').value.trim() || '은지쌤';
@@ -2384,10 +2418,18 @@ if (state.active && state.active.sw) {
   const a = state.active;
   // 마지막으로 확인된 시점까지만 인정
   const el = a.acc + (a.paused ? 0 : Math.max(0, (a.beat || a.runFrom) - a.runFrom));
-  if (state.settings.strict) finishStopwatch('앱이 닫혀서 마지막 확인 시점까지 기록했어요', el);
+  if (state.settings.leaveMode === 'continue' && !a.paused) {
+    // [추가] 화면이 꺼진 사이 휴대폰이 앱을 닫았어도 지금까지 계속 잰 것으로 봄 (최대 3시간)
+    const cap = 180 * 60000 / (a.sp || 1);
+    if (a.acc + (Date.now() - a.runFrom) > cap) a.runFrom = Date.now() - (cap - a.acc);
+    a.beat = Date.now(); save(); showRunning();
+  }
+  else if (state.settings.leaveMode === 'fail') finishStopwatch('앱이 닫혀서 마지막 확인 시점까지 기록했어요', el);
   else { a.acc = el; a.paused = false; a.runFrom = Date.now(); a.beat = Date.now(); save(); showRunning(); toast('⏸ 멈췄던 스톱워치를 이어서 재요'); }
 } else if (state.active) {
-  if (state.settings.strict) {
+  if (state.settings.leaveMode === 'continue' && state.active.paused == null) {
+    showRunning();   // [추가] 끝나는 시각 기준으로 이어서 흐름 (이미 지났으면 바로 성공)
+  } else if (state.settings.leaveMode === 'fail') {
     onFail('집중 중에 앱을 닫거나 새로고침했어요');
   } else {
     const a = state.active;
