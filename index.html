@@ -50,6 +50,8 @@ if (window.tailwind) tailwind.config = { theme: { extend: { fontFamily: { sans: 
   .flake { position: absolute; top: -4%; border-radius: 50%; background: #fff; box-shadow: 0 0 3px rgba(140,170,200,.8); animation: fall linear infinite; }
   @keyframes twinkle { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
   .twinkle { animation: twinkle 1.6s ease-in-out infinite; }
+  @keyframes catwave { 0%,100% { transform: rotate(0deg); } 50% { transform: rotate(-14deg); } }
+  .cat-wave { animation: catwave 1.1s ease-in-out infinite; transform-origin: 80px 74px; transform-box: view-box; }
   .thirsty { filter: saturate(.25) sepia(.55) brightness(1.02); transform: rotate(-1.5deg); }
   /* [추가] 글자 크기 3단계 (설정에서 선택, 기본 '크게') */
   #app.fs2 .text-\[8px\] { font-size: 10px !important; line-height: 1.4 !important; }
@@ -246,6 +248,15 @@ if (window.tailwind) tailwind.config = { theme: { extend: { fontFamily: { sans: 
 
     <!-- ===== 통계 탭 ===== -->
     <section id="view-stats" class="hidden flex-col p-5 pt-3 gap-3">
+      <!-- [추가] 응원하는 치즈고양이 (2026-11-25 ~ 12-11) -->
+      <div id="cat-card" class="hidden card p-3 flex items-center gap-3 cursor-pointer select-none" onclick="catTap()">
+        <div id="cat-pic" class="w-24 h-24 shrink-0 anim-float"></div>
+        <div class="relative flex-1 bg-amber-50 border-2 border-amber-200 rounded-2xl px-3 py-2.5">
+          <span class="absolute -left-2 top-1/2 -translate-y-1/2 w-3 h-3 bg-amber-50 border-l-2 border-b-2 border-amber-200 rotate-45"></span>
+          <p id="cat-msg" class="text-[15px] text-amber-900 leading-snug"></p>
+          <p id="cat-sub" class="text-[10px] text-amber-600 font-sans mt-1"></p>
+        </div>
+      </div>
       <div class="card p-4">
         <div class="flex justify-between items-center mb-2"><h3 class="text-green-700 text-lg">🌲 나의 숲</h3><span id="forest-count" class="text-xs text-gray-500 font-sans"></span></div>
         <div class="relative rounded-2xl overflow-hidden" style="background:linear-gradient(#DDF0FF 0%, #EFF9E8 45%, #CDEBB4 80%, #B5DE97 100%)">
@@ -1963,7 +1974,81 @@ function timetableHTML(d) {
 
 /* ================= 통계 ================= */
 let statPeriod = 'week';
+/* ================= 🐱 응원하는 치즈고양이 (11/25 ~ 12/11) ================= */
+// [추가] 이름을 불러 주며 매일 다른 말로 응원해요. 받침 있으면 '아', 없으면 '야' (은지야, 예현아)
+const CAT_FROM = '2026-11-25', CAT_TO = '2026-12-11';
+const CAT_MSGS = [
+  '{n}! 힘내! 화이팅! 매우 잘하고 있어!',
+  '{n}, 오늘도 숲에 와 줘서 고마워옹! 한 걸음씩 가 보자!',
+  '{n}! 어제보다 오늘 더 멋져! 냥냥 화이팅!',
+  '{n}, 잠깐 쉬어도 괜찮아. 다시 시작하면 돼! 힘내!',
+  '{n}! 네가 키운 나무가 쑥쑥 자라고 있어! 최고야!',
+  '{n}, 집중하는 모습이 정말 멋있어! 내가 옆에서 응원할게옹!',
+  '{n}! 꾸준함이 제일 큰 힘이야. 오늘도 화이팅!',
+  '{n}, 어려운 문제도 너라면 풀 수 있어! 난 널 믿어!',
+  '{n}! 물 한 잔 마시고, 딱 25분만 같이 해 보자!',
+  '{n}, 넌 생각보다 훨씬 잘하고 있어! 자신감 뿜뿜!',
+  '{n}! 오늘 공부한 만큼 꿈에 한 뼘 더 가까워졌어! 냥!',
+  '{n}, 지칠 땐 내 꼬리 보고 한 번 웃어! 다시 힘내자!',
+  '{n}! 작은 성공이 모이면 울창한 숲이 돼! 화이팅!',
+  '{n}, 포기하지 않는 네가 정말 자랑스러워!',
+  '{n}! 이번 주도 잘 버텼어! 조금만 더 힘내 보자!',
+  '{n}, 너의 노력은 절대 사라지지 않아! 늘 응원해!',
+  '{n}! 여기까지 해낸 너, 진짜 멋져! 매우 잘하고 있어!',
+];
+function callName() {
+  const n = cleanName(state.settings.student || '');
+  if (!n) return '친구야';
+  return n + (hasBatchim(n.slice(-1)) ? '아' : '야');
+}
+function catActive(d = today()) { return d >= CAT_FROM && d <= CAT_TO; }
+function catMessage(d = today()) {
+  const i = Math.round((new Date(d.replace(/-/g, '/')) - new Date(CAT_FROM.replace(/-/g, '/'))) / 86400000);
+  return CAT_MSGS[((i % CAT_MSGS.length) + CAT_MSGS.length) % CAT_MSGS.length].replace('{n}', callName());
+}
+function catSVG(happy) {
+  return `<svg viewBox="0 0 120 120" class="w-full h-full">
+    <ellipse cx="60" cy="112" rx="34" ry="5" fill="#000" opacity=".08"/>
+    <path d="M86 98 Q112 96 106 70 Q103 58 94 62 Q101 70 98 80 Q94 92 80 92Z" fill="#F2A541"/>
+    <path d="M100 66 l5 4 M102 76 l6 2" stroke="#D9822B" stroke-width="2.5" stroke-linecap="round"/>
+    <ellipse cx="58" cy="86" rx="30" ry="25" fill="#F2A541"/>
+    <ellipse cx="58" cy="92" rx="16" ry="17" fill="#FFF6E8"/>
+    <path d="M33 78 q6 2 9 0 M31 88 q6 2 9 0 M76 74 q5 2 8 0" stroke="#D9822B" stroke-width="3" stroke-linecap="round" fill="none"/>
+    <ellipse cx="44" cy="108" rx="9" ry="6" fill="#FFF6E8"/><ellipse cx="66" cy="108" rx="9" ry="6" fill="#FFF6E8"/>
+    <g class="cat-wave"><path d="M80 74 Q94 56 92 42" stroke="#F2A541" stroke-width="12" stroke-linecap="round" fill="none"/><circle cx="92" cy="40" r="7" fill="#FFF6E8"/><circle cx="92" cy="40" r="2.2" fill="#FFB3C7"/></g>
+    <path d="M30 34 L26 8 L48 24Z" fill="#F2A541"/><path d="M32 30 L30 14 L43 24Z" fill="#FFB3C7"/>
+    <path d="M90 34 L94 8 L72 24Z" fill="#F2A541"/><path d="M88 30 L90 14 L77 24Z" fill="#FFB3C7"/>
+    <ellipse cx="60" cy="44" rx="33" ry="28" fill="#F2A541"/>
+    <path d="M60 17 l0 9 M51 18 l2 8 M69 18 l-2 8" stroke="#D9822B" stroke-width="3" stroke-linecap="round"/>
+    <ellipse cx="60" cy="54" rx="17" ry="12" fill="#FFF6E8"/>
+    ${happy
+      ? `<path d="M41 42 q5 -6 10 0" stroke="#4B3B47" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M69 42 q5 -6 10 0" stroke="#4B3B47" stroke-width="3" fill="none" stroke-linecap="round"/>`
+      : `<ellipse cx="46" cy="42" rx="4.2" ry="5" fill="#4B3B47"/><ellipse cx="74" cy="42" rx="4.2" ry="5" fill="#4B3B47"/><circle cx="47.5" cy="40" r="1.6" fill="#fff"/><circle cx="75.5" cy="40" r="1.6" fill="#fff"/>`}
+    <ellipse cx="36" cy="52" rx="5" ry="3" fill="#FF9EB5" opacity=".8"/><ellipse cx="84" cy="52" rx="5" ry="3" fill="#FF9EB5" opacity=".8"/>
+    <path d="M57 50 l3 3 l3 -3z" fill="#E8798F"/>
+    <path d="M60 53 q-3 5 -7 3 M60 53 q3 5 7 3" stroke="#4B3B47" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+    <path d="M40 54 l-12 -2 M40 57 l-12 2 M80 54 l12 -2 M80 57 l12 2" stroke="#C98A4B" stroke-width="1.2" stroke-linecap="round"/>
+  </svg>`;
+}
+function renderCat() {
+  const card = document.getElementById('cat-card');
+  const on = catActive();
+  card.classList.toggle('hidden', !on); card.classList.toggle('flex', on);
+  if (!on) return;
+  document.getElementById('cat-pic').innerHTML = catSVG(false);
+  document.getElementById('cat-msg').textContent = catMessage();
+  const left = ddayDiff(CAT_TO);
+  document.getElementById('cat-sub').textContent = left > 0 ? `🐾 치즈냥이 응원 · 12월 11일까지 ${left + 1}일 남았어요` : '🐾 치즈냥이 응원 · 오늘이 마지막 날이에요!';
+}
+function catTap() {
+  const pic = document.getElementById('cat-pic');
+  pic.innerHTML = catSVG(true);
+  toast(`🐱 냐옹! ${callName()} 화이팅!`);
+  setTimeout(() => { pic.innerHTML = catSVG(false); }, 1500);
+}
+
 function renderStats() {
+  renderCat();
   document.querySelectorAll('#period-seg button').forEach(b => { b.classList.toggle('on', b.dataset.p === statPeriod); b.onclick = () => { statPeriod = b.dataset.p; renderStats(); }; });
   const [from, to] = periodRange(statPeriod);
   const totals = subjectTotals(from, to);
