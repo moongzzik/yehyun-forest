@@ -1132,10 +1132,10 @@ const ANIMALS = [
   { t: 's', n: 21, e: '🦌', k: '사슴', pos: 'left:-9%;bottom:16%;font-size:30px' },
   { t: 's', n: 30, e: '🦉', k: '부엉이', pos: 'left:27%;top:22%;font-size:19px' },
   { t: 'a', n: 10, e: '🦋', k: '나비', pos: 'left:6%;top:10%;font-size:17px' },
-  { t: 'a', n: 20, e: '🦔', k: '고슴도치', pos: 'left:24%;bottom:-1%;font-size:19px' },
-  { t: 'a', n: 40, e: '🦆', k: '오리', pos: 'right:-10%;bottom:-3%;font-size:21px' },
+  { t: 'a', n: 20, e: '🦔', k: '고슴도치', pos: 'left:24%;bottom:3%;font-size:19px' },   // [수정] 아래 잘림 방지
+  { t: 'a', n: 40, e: '🦆', k: '오리', pos: 'right:-7%;bottom:5%;font-size:22px' },   // [수정] 오리: 아래가 잘려 머리만 보이던 문제
   { t: 'a', n: 70, e: '🦊', k: '여우', pos: 'right:-9%;bottom:16%;font-size:25px' },
-  { t: 'a', n: 100, e: '🦅', k: '독수리', pos: 'right:-6%;top:-2%;font-size:23px' },
+  { t: 'a', n: 100, e: '🦅', k: '독수리', pos: 'right:-6%;top:3%;font-size:23px' },   // [수정] 위 잘림 방지
 ];
 const animalCond = a => `${a.t === 's' ? '연속' : '누적'} ${a.n}일`;
 function achSet() { return new Set(state.forest.allDays || []); }
@@ -1174,7 +1174,7 @@ function nextAnimal() {
 function renderAnimals() {
   const thirsty = isThirsty();
   document.getElementById('animals').innerHTML = thirsty ? '' :
-    ANIMALS.filter(a => state.animals[a.k]).map((a, i) => `<span class="absolute anim-float" style="${a.pos};animation-delay:${i * .4}s" title="${a.k}">${a.e}</span>`).join('');
+    ANIMALS.filter(a => state.animals[a.k]).map((a, i) => `<span class="absolute anim-float" style="${a.pos};line-height:1;animation-delay:${i * .4}s" title="${a.k}">${a.e}</span>`).join('');
   document.getElementById('tree').classList.toggle('thirsty', thirsty);
   const bub = document.getElementById('thirst-bubble');
   bub.classList.toggle('hidden', !thirsty);
