@@ -1144,10 +1144,18 @@ const ANIMALS = [
   { t: 's', n: 30, e: '🦉', k: '부엉이', pos: 'left:27%;top:22%;font-size:19px' },
   { t: 'a', n: 10, e: '🦋', k: '나비', pos: 'left:6%;top:10%;font-size:17px' },
   { t: 'a', n: 20, e: '🦔', k: '고슴도치', pos: 'left:24%;bottom:3%;font-size:19px' },   // [수정] 아래 잘림 방지
-  { t: 'a', n: 40, e: '🦆', k: '오리', pos: 'right:-7%;bottom:5%;font-size:22px' },   // [수정] 오리: 아래가 잘려 머리만 보이던 문제
-  { t: 'a', n: 70, e: '🦊', k: '여우', pos: 'right:-9%;bottom:16%;font-size:25px' },
+  { t: 'a', n: 40, e: '🦆', k: '오리', pos: 'right:17%;bottom:1%;font-size:21px', art: 'duck' },   // [수정] 폰 이모지가 머리만 있어서 몸통 있는 그림으로
+  { t: 'a', n: 70, e: '🦊', k: '여우', pos: 'right:-5%;bottom:15%;font-size:25px', art: 'fox' },   // [수정] 🦊는 얼굴 이모지 → 온몸 그림
   { t: 'a', n: 100, e: '🦅', k: '독수리', pos: 'right:-6%;top:3%;font-size:23px' },   // [수정] 위 잘림 방지
 ];
+// [추가] 오리·여우는 휴대폰 이모지가 얼굴만 나와서, 몸통까지 있는 오리지널 그림을 씀
+const ANIMAL_ART = {
+  duck: `<svg viewBox="0 0 64 52"> <ellipse cx="34" cy="49" rx="20" ry="2.5" fill="#000" opacity=".12"/> <path d="M24 44 l-3 5 h6z M38 44 l-3 5 h6z" fill="#F57C00"/> <path d="M50 30 Q60 22 59 30 Q57 36 50 36Z" fill="#5D4037"/> <ellipse cx="35" cy="34" rx="18" ry="11" fill="#BCAAA4"/> <ellipse cx="30" cy="38" rx="12" ry="6" fill="#D7CCC8"/> <ellipse cx="38" cy="31" rx="11" ry="6.5" fill="#8D6E63"/> <path d="M40 33 h7" stroke="#3949AB" stroke-width="2.4" stroke-linecap="round"/> <path d="M12 18 Q11 30 20 35 L30 28 Q25 23 24 17Z" fill="#6D4C41"/> <path d="M11.6 22 Q18 24.5 24.6 21.5" stroke="#fff" stroke-width="2.2" fill="none"/> <circle cx="18" cy="14" r="9" fill="#2E7D32"/> <circle cx="15" cy="12" r="3" fill="#43A047" opacity=".7"/> <path d="M10 15 Q2 15 2 19 Q6 21 11 19Z" fill="#FBC02D"/> <circle cx="15.5" cy="13.5" r="1.6" fill="#111"/><circle cx="15" cy="13" r=".5" fill="#fff"/> </svg>`,
+  fox: `<svg viewBox="0 0 64 52"> <ellipse cx="34" cy="49" rx="22" ry="2.5" fill="#000" opacity=".12"/> <path d="M46 34 Q62 30 61 16 Q60 8 54 10 Q58 18 52 24 Q46 28 44 30Z" fill="#EF7D2A"/> <path d="M61 16 Q60 8 54 10 Q57 13 56.5 17Z" fill="#FFF8F0"/> <rect x="22" y="36" width="4" height="12" rx="2" fill="#5D3A1A"/><rect x="28" y="37" width="4" height="11" rx="2" fill="#4A2E14"/> <rect x="40" y="36" width="4" height="12" rx="2" fill="#5D3A1A"/><rect x="45" y="37" width="4" height="11" rx="2" fill="#4A2E14"/> <ellipse cx="35" cy="32" rx="16" ry="9" fill="#F08A35"/> <path d="M22 30 Q26 40 34 38 Q28 34 27 28Z" fill="#FFF3E6"/> <path d="M12 8 L14 18 L20 13Z" fill="#E0701F"/><path d="M13 10 L14.5 16 L18 13Z" fill="#3E2A1A"/> <path d="M21 7 L20 17 L26 14Z" fill="#E0701F"/><path d="M21.5 9 L21 15 L24.5 13.5Z" fill="#3E2A1A"/> <path d="M26 16 Q26 27 16 27 Q8 27 3 22 Q8 18 12 15 Q18 11 26 16Z" fill="#F08A35"/> <path d="M3 22 Q8 26 16 27 Q12 22 9 21Z" fill="#FFF3E6"/> <circle cx="3.2" cy="21.6" r="1.6" fill="#222"/> <path d="M12 18.5 q2 -1.6 3.6 0" stroke="#222" stroke-width="1.5" fill="none" stroke-linecap="round"/> <path d="M18 22 Q24 28 22 34 L28 30 Q28 22 24 18Z" fill="#F08A35"/> </svg>`,
+};
+function aIcon(a) {
+  return a.art ? `<span style="display:inline-block;width:1.7em;height:1.38em;vertical-align:bottom">${ANIMAL_ART[a.art].replace('<svg ', '<svg style="width:100%;height:100%;display:block" ')}</span>` : a.e;
+}
 const animalCond = a => `${a.t === 's' ? '연속' : '누적'} ${a.n}일`;
 function achSet() { return new Set(state.forest.allDays || []); }
 function achStreak() {
@@ -1185,7 +1193,7 @@ function nextAnimal() {
 function renderAnimals() {
   const thirsty = isThirsty();
   document.getElementById('animals').innerHTML = thirsty ? '' :
-    ANIMALS.filter(a => state.animals[a.k]).map((a, i) => `<span class="absolute anim-float" style="${a.pos};line-height:1;animation-delay:${i * .4}s" title="${a.k}">${a.e}</span>`).join('');
+    ANIMALS.filter(a => state.animals[a.k]).map((a, i) => `<span class="absolute anim-float" style="${a.pos};line-height:1;animation-delay:${i * .4}s" title="${a.k}">${aIcon(a)}</span>`).join('');
   document.getElementById('tree').classList.toggle('thirsty', thirsty);
   const bub = document.getElementById('thirst-bubble');
   bub.classList.toggle('hidden', !thirsty);
@@ -1629,7 +1637,7 @@ function completeStudy(a, minutes, flower) {
     else if (ev.stageUp) extras.unshift(`<p class="text-green-700 bg-green-50 rounded-xl py-2">🌿 ${SPECIES[c.sp].n}가 '${ev.stageUp}'(으)로 자랐어요! (${c.days.length}/${TREE_DAYS}일)</p>`);
     else if (ev.newDay) extras.unshift(`<p class="text-green-700 bg-green-50 rounded-xl py-2">🌳 오늘 달성! ${SPECIES[c.sp].n}가 하루 더 자랐어요 (${c.days.length}/${TREE_DAYS}일)</p>`);
     if (wasThirsty) extras.unshift(`<p class="text-sky-700 bg-sky-50 rounded-xl py-2">💧 나무가 물을 마시고 다시 싱싱해졌어요!${hadFriends ? ' 숨었던 친구들도 돌아왔어요' : ''}</p>`);
-    newAnimals.forEach(a => extras.unshift(`<p class="text-amber-700 bg-amber-50 rounded-xl py-2.5"><span class="text-2xl">${a.e}</span> <b>${a.k}</b>가 숲에 놀러 왔어요! (${animalCond(a)} 달성) · 숲 친구 ${ANIMALS.filter(x => state.animals[x.k]).length}/10</p>`));
+    newAnimals.forEach(a => extras.unshift(`<p class="text-amber-700 bg-amber-50 rounded-xl py-2.5"><span class="text-2xl">${aIcon(a)}</span> <b>${a.k}</b>가 숲에 놀러 왔어요! (${animalCond(a)} 달성) · 숲 친구 ${ANIMALS.filter(x => state.animals[x.k]).length}/10</p>`));
   }
   if (isXmas()) extras.unshift(`<p class="text-red-600 bg-red-50 rounded-xl py-2">🎄 크리스마스에도 공부한 너, 그게 최고의 선물이야! ⛄<br><span class="text-xs">- ${esc(state.settings.teacher)} -</span></p>`);
   checkBadges().forEach(b => extras.push(`<p class="text-amber-600 bg-amber-50 rounded-xl py-2">🏅 새 배지: ${b.icon} ${b.name}</p>`));
@@ -2090,13 +2098,13 @@ function renderForest() {
   const w = many ? 'w-[58px] h-[70px]' : 'w-[76px] h-[92px]';
   let h = f.trees.map((t, i) => `<div class="${w} -mx-2 -mb-4 anim-pop" style="animation-delay:${Math.min(i, 20) * 40}ms" title="${SPECIES[t.sp].n} · ${t.done} 완성 · 잎 ${t.leaves}장">${treeSVG(t.sp, TREE_DAYS, t.leaves, { ground: false, viewBox: '10 10 180 180', maxLeaves: 90 })}</div>`).join('');
   h += `<div class="${f.trees.length ? w : 'w-36 h-36'} -mx-1 -mb-4 relative" title="${sp.n} 키우는 중">${treeSVG(c.sp, c.days.length, c.leaves, { ground: false, viewBox: '10 10 180 180' })}<span class="absolute -top-1 left-1/2 -translate-x-1/2 whitespace-nowrap text-[9px] bg-white/90 text-green-700 rounded-full px-1.5 font-sans">자라는 중</span></div>`;
-  if (!isThirsty()) h += ANIMALS.filter(a => state.animals[a.k]).map(a => `<span class="text-2xl -mb-3 mx-0.5 anim-float" title="${a.k}">${a.e}</span>`).join('');
+  if (!isThirsty()) h += ANIMALS.filter(a => state.animals[a.k]).map(a => `<span class="text-2xl -mb-3 mx-0.5 anim-float" title="${a.k}">${aIcon(a)}</span>`).join('');
   document.getElementById('forest-trees').innerHTML = h;
   document.getElementById('forest-clouds').innerHTML = cloudsHTML(true);
   document.getElementById('xmas-forest').innerHTML = xmasLayer(true);
   document.getElementById('animal-dex').innerHTML = ANIMALS.map(a => {
     const got = state.animals[a.k];
-    return `<div class="rounded-xl py-1.5 text-center border-2 ${got ? 'border-amber-200 bg-amber-50' : 'border-gray-100 bg-gray-50'}"><div class="text-2xl ${got ? '' : 'grayscale opacity-30'}">${a.e}</div><p class="text-[10px] ${got ? 'text-gray-700' : 'text-gray-400'}">${got ? a.k : '???'}</p><p class="text-[9px] text-gray-400 font-sans">${got ? (isThirsty() ? '숨었어요' : '함께해요') : animalCond(a)}</p></div>`;
+    return `<div class="rounded-xl py-1.5 text-center border-2 ${got ? 'border-amber-200 bg-amber-50' : 'border-gray-100 bg-gray-50'}"><div class="text-2xl ${got ? '' : 'grayscale opacity-30'}">${aIcon(a)}</div><p class="text-[10px] ${got ? 'text-gray-700' : 'text-gray-400'}">${got ? a.k : '???'}</p><p class="text-[9px] text-gray-400 font-sans">${got ? (isThirsty() ? '숨었어요' : '함께해요') : animalCond(a)}</p></div>`;
   }).join('');
   document.getElementById('forest-note').textContent = f.trees.length
     ? `지금 ${sp.n}를 키우는 중이에요 (${c.days.length}/${TREE_DAYS}일). 목표를 달성한 날이 30일 모이면 숲에 한 그루가 더 심어져요.`
