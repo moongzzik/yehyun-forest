@@ -50,6 +50,11 @@ if (window.tailwind) tailwind.config = { theme: { extend: { fontFamily: { sans: 
   .flake { position: absolute; top: -4%; border-radius: 50%; background: #fff; box-shadow: 0 0 3px rgba(140,170,200,.8); animation: fall linear infinite; }
   @keyframes twinkle { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
   .twinkle { animation: twinkle 1.6s ease-in-out infinite; }
+  /* [추가] 기말고사 응원 트리: 반짝이 */
+  @keyframes sparkle { 0%,100% { opacity: 0; transform: scale(.2) rotate(0deg); } 50% { opacity: 1; transform: scale(1) rotate(45deg); } }
+  .sparkle { animation: sparkle 1.8s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+  @keyframes glowpulse { 0%,100% { opacity: .35; } 50% { opacity: .8; } }
+  .glowpulse { animation: glowpulse 2.4s ease-in-out infinite; }
   @keyframes cheerhop { 0%,100% { transform: translateY(0); } 35% { transform: translateY(-12px) rotate(-6deg); } 65% { transform: translateY(0) rotate(4deg); } }
   .cheer-hop { animation: cheerhop .6s ease-out; }
   .thirsty { filter: saturate(.25) sepia(.55) brightness(1.02); transform: rotate(-1.5deg); }
@@ -120,6 +125,7 @@ if (window.tailwind) tailwind.config = { theme: { extend: { fontFamily: { sans: 
         <button onclick="hideInstallBanner()" class="text-gray-300 px-1">✕</button>
       </div>
       <div id="xmas-banner" class="hidden rounded-2xl px-3 py-2.5 text-center text-sm border-2 border-red-200 bg-gradient-to-r from-red-50 via-white to-green-50 text-red-600">🎄 메리 크리스마스! 오늘은 숲에 눈이 내리고 나무들이 트리로 변했어요 ⛄</div>
+      <div id="examx-banner" class="hidden rounded-2xl px-3 py-2.5 text-center text-sm border-2 border-amber-200 bg-gradient-to-r from-green-50 via-amber-50 to-red-50 text-green-800"></div><!-- [추가] 기말고사 응원 트리 -->
       <div id="exam-card" class="hidden rounded-2xl p-3.5 border-2 border-amber-200 bg-gradient-to-br from-amber-50 to-yellow-50"></div>
       <div id="char-wrap" class="relative w-full h-52 flex items-center justify-center transition-all duration-500 rounded-3xl overflow-hidden" style="background:linear-gradient(#E6F4FF 0%, rgba(255,255,255,0) 70%)">
         <div id="sky-clouds"></div>
@@ -991,6 +997,23 @@ function cloudsHTML(big) {
 
 /* ================= 🎄 12월 25일 크리스마스 이벤트 ================= */
 // [추가] 12월 25일 하루: 눈이 내리고, 눈사람이 오고, 모든 나무가 크리스마스트리로 꾸며져요
+// [추가] 기말고사 응원 트리 이벤트 (11/27 ~ 12/11): 잎이 5장 넘은 키우는 나무가 반짝이는 크리스마스트리로
+const EXAMX_FROM = '2026-11-27', EXAMX_TO = '2026-12-11', EXAMX_LEAVES = 5;
+function examXActive() { if (window.__forceExamX !== undefined) return window.__forceExamX; const d = typeof today === 'function' ? today() : ''; return d >= EXAMX_FROM && d <= EXAMX_TO; }
+function examXOn(leaves) { return examXActive() && leaves >= EXAMX_LEAVES; }
+// 반짝이: 네 갈래 별빛이 번갈아 반짝여요
+function xSparkles(seed, x1, x2, y1, y2, n, size) {
+  const R = rng(seed * 97 + 11), cols = ['#FFFFFF', '#FFF59D', '#FFE082', '#FFFDE7'];
+  let s = '';
+  for (let k = 0; k < n; k++) {
+    const x = x1 + R() * (x2 - x1), y = y1 + R() * (y2 - y1), r = size * (.6 + R() * .7), w = r * .22;
+    s += `<path class="sparkle" style="animation-delay:${(R() * 1.8).toFixed(2)}s" d="M${F1(x)} ${F1(y - r)} Q${F1(x + w)} ${F1(y - w)} ${F1(x + r)} ${F1(y)} Q${F1(x + w)} ${F1(y + w)} ${F1(x)} ${F1(y + r)} Q${F1(x - w)} ${F1(y + w)} ${F1(x - r)} ${F1(y)} Q${F1(x - w)} ${F1(y - w)} ${F1(x)} ${F1(y - r)}Z" fill="${cols[k % cols.length]}" stroke="#FFD54F" stroke-width=".5"/>`;
+  }
+  return s;
+}
+function xGlow(uid, cx, cy, rx, ry) {
+  return `<defs><radialGradient id="gl${uid}"><stop offset="0" stop-color="#FFF59D" stop-opacity="1"/><stop offset=".6" stop-color="#FFE082" stop-opacity=".5"/><stop offset="1" stop-color="#FFE082" stop-opacity="0"/></radialGradient></defs><ellipse class="glowpulse" cx="${F1(cx)}" cy="${F1(cy)}" rx="${F1(rx)}" ry="${F1(ry)}" fill="url(#gl${uid})"/>`;
+}
 function isXmas() { return window.__forceXmas === true || (typeof today === 'function' && today().slice(5) === '12-25'); }
 const XMAS_COLORS = ['#FF5252', '#FFD740', '#40C4FF', '#69F0AE', '#FF80AB'];
 function xStar(x, y, r) {
@@ -1014,7 +1037,7 @@ function xBauble(x, y, c, r) {
     <ellipse cx="${F1(x - r * .35)}" cy="${F1(y - r * .4)}" rx="${F1(r * .35)}" ry="${F1(r * .22)}" fill="#fff" opacity=".8"/>`;
 }
 // 나무 한 그루를 크리스마스트리로 꾸미기 (나무 그림과 같은 좌표계)
-function xmasDeco(i, art, p) {
+function xmasDeco(i, art, p, big = 1) {   // [수정] big: 어린 나무는 장식을 크게
   const R = rng(i * 131 + 5);
   let snow = '', lights = '', balls = '', top;
   const bc = ['#E53935', '#FBC02D', '#1E88E5', '#E0E0E0', '#8E24AA'];
@@ -1028,7 +1051,7 @@ function xmasDeco(i, art, p) {
     lights += xGarland(minX + 18, cy + 12, 100, cy + 38, maxX - 18, cy + 12, 8, i + 2);
     for (let k = 0; k < 8; k++) {
       const e = shown[(k * 3 + 1) % shown.length], ry = e[3] || e[2], ang = (R() * .9 + .05) * Math.PI, rad = .3 + R() * .45;
-      balls += xBauble(e[0] + e[2] * rad * Math.cos(ang), e[1] + ry * rad * Math.sin(ang), bc[k % bc.length], 4.2);
+      balls += xBauble(e[0] + e[2] * rad * Math.cos(ang), e[1] + ry * rad * Math.sin(ang), bc[k % bc.length], 4.2 * big);
     }
   } else {
     const k2 = art.cone, tp = k2.top + (1 - p) * 30;
@@ -1038,9 +1061,9 @@ function xmasDeco(i, art, p) {
       lights += xGarland(100 - hw, y - 7, 100, y + 9, 100 + hw, y - 7, 6 + j * 2, i + j);
       snow += `<path d="M${F1(100 - hw * .9)} ${F1(y - 3)} q${F1(hw * .45)} -5 ${F1(hw * .9)} -10 q${F1(hw * .45)} 5 ${F1(hw * .9)} 10" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round" opacity=".9"/>`;
     });
-    for (let k = 0; k < 8; k++) { const t = .25 + k * .085, y = tp + (k2.base - tp) * t, hw = (k2.w0 + (k2.w1 - k2.w0) * t) * .6; balls += xBauble(100 + (R() * 2 - 1) * hw, y + 4, bc[k % bc.length], 3.8); }
+    for (let k = 0; k < 8; k++) { const t = .25 + k * .085, y = tp + (k2.base - tp) * t, hw = (k2.w0 + (k2.w1 - k2.w0) * t) * .6; balls += xBauble(100 + (R() * 2 - 1) * hw, y + 4, bc[k % bc.length], 3.8 * big); }
   }
-  return snow + lights + balls + xStar(100, Math.max(top - 3, 13), 10);   // 꼭대기 별 (잘리지 않게)
+  return snow + lights + balls + xStar(100, Math.max(top - 3 * big, 13), 10 * big);   // 꼭대기 별 (잘리지 않게)
 }
 // 눈송이
 function snowHTML(n) {
@@ -1094,7 +1117,8 @@ function treeSVG(spIdx, days, leaves, o = {}) {
       <path d="M100 ${182 - h} q${-s * 1.6} ${-s * .2} ${-s * 1.9} ${-s * 1.2} q${s * 1.2} ${-s * .6} ${s * 1.9} ${s * 1.2}z" fill="${c[1]}"/>
       <path d="M100 ${182 - h} q${s * 1.6} ${-s * .2} ${s * 1.9} ${-s * 1.2} q${-s * 1.2} ${-s * .6} ${-s * 1.9} ${s * 1.2}z" fill="${c[0]}"/>
       ${days >= 3 ? `<path d="M100 ${182 - h} q-2 ${-s} 1 ${-s * 1.6} q3 ${s * .7} -1 ${s * 1.6}z" fill="${c[1]}"/>` : ''}
-      ${[...Array(Math.min(leaves, 6))].map((_, k) => accent(sp.a, 100 + (k % 2 ? 1 : -1) * (6 + k * 2), 182 - h * (.35 + k * .08), 3, k % 2 ? 40 : -40, c[0])).join('')}`);
+      ${[...Array(Math.min(leaves, 6))].map((_, k) => accent(sp.a, 100 + (k % 2 ? 1 : -1) * (6 + k * 2), 182 - h * (.35 + k * .08), 3, k % 2 ? 40 : -40, c[0])).join('')}
+      ${(o.cur && examXOn(leaves)) || xm ? xGlow(uid, 100, 182 - h * .6, 34, h * .8 + 10) + xGarland(100 - s * 1.6, 182 - h - s * .4, 100, 182 - h + s * .6, 100 + s * 1.6, 182 - h - s * .4, 5, i) + xStar(100, 182 - h - s * 1.9, 6) + xSparkles(i + days, 70, 130, 182 - h - 30, 178, 7, 4.5) : ''}`);   // [추가] 새싹도 잎 5장이면 작은 트리
   }
   // 묘목 이후: 다 자란 모습을 작게 그렸다가 점점 키워요
   const art = ART[i](uid, sp);
@@ -1116,7 +1140,13 @@ function treeSVG(spIdx, days, leaves, o = {}) {
     g += accent(sp.a, x, y + 3, 3.6, r1 * 360, k % 3 ? sp.c[0] : sp.c[1]);
   }
   // [수정] 꽃·열매 장식은 삭제 (잎만 남김)
-  if (xm) g += xmasDeco(i, art, p);   // [추가] 12/25 크리스마스트리 장식
+  const exx = !xm && o.cur && examXOn(leaves);
+  const big = exx ? Math.min(1.9, 1 / sc) : 1;
+  if (xm || exx) g += xmasDeco(i, art, p, big);   // [추가] 12/25 크리스마스트리 장식 · [추가] 기말고사 응원 트리
+  if (exx) {   // [추가] 반짝반짝: 나무 뒤 빛 + 별빛
+    const top = art.pf ? Math.min(...art.pf.map(e => e[1] - (e[3] || e[2]))) : art.cone.top + (1 - p) * 30;
+    g = xGlow(uid, 100, (top + 180) / 2, 82, (180 - top) / 2 + 14) + g + xSparkles(i * 7 + leaves, 30, 170, Math.max(top - 16, 8), 176, 16, 5.5 * big);
+  }
   // 땅에 떨어진 잎 (가을 나무)
   if (p >= .8 && art.drop) { const D = rng(i * 13 + 3); for (let k = 0; k < 5; k++) g += accent(sp.a === 'leaf' ? 'leaf' : sp.a, 60 + D() * 80, 180 + D() * 4, 2.6, D() * 360, art.drop); }
   return wrap(`<g transform="translate(100 182) scale(${sc.toFixed(3)}) translate(-100 -182)">${g}</g>`);
@@ -1325,12 +1355,18 @@ function renderTree() {
   document.getElementById('level-next').textContent = `🍃 잎 ${c.leaves}장`;
   document.getElementById('level-sub').textContent = `${TREE_DAYS}일 중 ${d}일 달성${nxt ? ` · ${nxt.n}까지 ${nxt.d - d}일` : ''}${state.forest.trees.length ? ` · 숲에 ${state.forest.trees.length}그루` : ''}`;
   document.getElementById('exp-bar').style.width = `${Math.round(d / TREE_DAYS * 100)}%`;
-  document.getElementById('tree').innerHTML = treeSVG(c.sp, d, c.leaves);
+  document.getElementById('tree').innerHTML = treeSVG(c.sp, d, c.leaves, { cur: true });
   const sky = document.getElementById('sky-clouds'); if (!sky.firstChild) sky.innerHTML = cloudsHTML(false);
   // [추가] 크리스마스: 눈·눈사람·겨울 하늘
   const xm = isXmas();
   document.getElementById('xmas-sky').innerHTML = xmasLayer(false);
   document.getElementById('xmas-banner').classList.toggle('hidden', !xm || !!state.active);
+  // [추가] 기말고사 응원 트리 안내
+  const xb = document.getElementById('examx-banner'), xOn = !xm && examXActive() && !state.active;
+  xb.classList.toggle('hidden', !xOn);
+  if (xOn) xb.innerHTML = c.leaves >= EXAMX_LEAVES
+    ? '🎄✨ <b>기말고사 응원 트리</b> · 내 나무가 반짝반짝 트리로 변했어요! 시험 화이팅!<br><span class="text-[11px] text-amber-700 font-sans">12월 11일까지</span>'
+    : `🎄 <b>기말고사 응원 이벤트</b> · 잎 ${EXAMX_LEAVES}장을 모으면 나무가 반짝이는 트리로 변해요! (지금 ${c.leaves}장)<br><span class="text-[11px] text-amber-700 font-sans">12월 11일까지</span>`;
   document.getElementById('char-wrap').style.background = xm ? 'linear-gradient(#CFE3F5 0%, #EEF5FB 60%, rgba(255,255,255,0) 100%)' : 'linear-gradient(#E6F4FF 0%, rgba(255,255,255,0) 70%)';
   const st = achStreak(), na = nextAnimal(), ds = daysSinceAch();
   let extra = '';
@@ -1545,7 +1581,7 @@ function showRunning() {
   else { gb.textContent = '포기하기 ㅠㅠ'; gb.className = 'w-full bg-gray-100 text-gray-500 text-lg py-3.5 rounded-2xl'; }
   document.getElementById('char-wrap').style.height = '7rem';
   const ch = document.getElementById('tree-box'); ch.style.width = ch.style.height = '7rem';
-  ['exam-card', 'install-banner', 'xmas-banner'].forEach(id => document.getElementById(id).classList.add('hidden'));
+  ['exam-card', 'install-banner', 'xmas-banner', 'examx-banner'].forEach(id => document.getElementById(id).classList.add('hidden'));
   document.getElementById('run-label').textContent = `${SUB[a.sub].e} ${a.sub} ${a.sw ? '순공 측정 중 ⏱' : '집중 중 🔥'}`;
   const rs = document.getElementById('run-set');
   if (a.sw) { rs.textContent = `${SW_FLOWER}분을 넘기면 잎이 돋아요 🍃`; rs.classList.remove('hidden'); }
@@ -2098,7 +2134,7 @@ function renderForest() {
   const many = f.trees.length > 10;
   const w = many ? 'w-[58px] h-[70px]' : 'w-[76px] h-[92px]';
   let h = f.trees.map((t, i) => `<div class="${w} -mx-2 -mb-4 anim-pop" style="animation-delay:${Math.min(i, 20) * 40}ms" title="${SPECIES[t.sp].n} · ${t.done} 완성 · 잎 ${t.leaves}장">${treeSVG(t.sp, TREE_DAYS, t.leaves, { ground: false, viewBox: '10 10 180 180', maxLeaves: 90 })}</div>`).join('');
-  h += `<div class="${f.trees.length ? w : 'w-36 h-36'} -mx-1 -mb-4 relative" title="${sp.n} 키우는 중">${treeSVG(c.sp, c.days.length, c.leaves, { ground: false, viewBox: '10 10 180 180' })}<span class="absolute -top-1 left-1/2 -translate-x-1/2 whitespace-nowrap text-[9px] bg-white/90 text-green-700 rounded-full px-1.5 font-sans">자라는 중</span></div>`;
+  h += `<div class="${f.trees.length ? w : 'w-36 h-36'} -mx-1 -mb-4 relative" title="${sp.n} 키우는 중">${treeSVG(c.sp, c.days.length, c.leaves, { ground: false, viewBox: '10 10 180 180', cur: true })}<span class="absolute -top-1 left-1/2 -translate-x-1/2 whitespace-nowrap text-[9px] bg-white/90 text-green-700 rounded-full px-1.5 font-sans">자라는 중</span></div>`;
   if (!isThirsty()) h += ANIMALS.filter(a => state.animals[a.k]).map(a => `<span class="text-2xl -mb-3 mx-0.5 anim-float" title="${a.k}">${aIcon(a)}</span>`).join('');
   document.getElementById('forest-trees').innerHTML = h;
   document.getElementById('forest-clouds').innerHTML = cloudsHTML(true);
